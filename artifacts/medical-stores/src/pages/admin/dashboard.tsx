@@ -49,6 +49,7 @@ import {
   XCircle, 
   Trash2, 
   Eye, 
+  Pencil,
   Store as StoreIcon,
   Activity,
   AlertCircle
@@ -284,6 +285,9 @@ export default function AdminDashboard() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setLocation(`/admin/stores/${store.id}`)}>
                             <Eye className="mr-2 h-4 w-4" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setLocation(`/admin/stores/${store.id}/edit`)}>
+                            <Pencil className="mr-2 h-4 w-4" /> Edit Store
                           </DropdownMenuItem>
                           
                           <DropdownMenuSeparator />

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { Stethoscope, User, LogOut } from "lucide-react";
+import { Stethoscope, User, LogOut, Home } from "lucide-react";
 
 export function Nav() {
   const { user, logout } = useAuth();
@@ -19,6 +19,13 @@ export function Nav() {
         </Link>
         
         <nav className="flex items-center gap-4">
+          <Button variant="ghost" asChild>
+            <Link href="/" className="flex items-center gap-1">
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline-block">Home</span>
+            </Link>
+          </Button>
+
           {user ? (
             <>
               {user.role === "admin" ? (
@@ -27,7 +34,7 @@ export function Nav() {
                 </Button>
               ) : (
                 <Button variant="ghost" asChild>
-                  <Link href="/owner/dashboard">Owner Dashboard</Link>
+                  <Link href="/owner/dashboard">My Dashboard</Link>
                 </Button>
               )}
               

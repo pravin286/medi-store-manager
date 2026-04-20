@@ -32,7 +32,8 @@ import {
   CheckCircle,
   XCircle,
   Trash2,
-  Clock
+  Clock,
+  Pencil
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -147,6 +148,9 @@ export default function AdminStoreDetail() {
             {getStatusBadge(store.status)}
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setLocation(`/admin/stores/${storeId}/edit`)} variant="outline">
+              <Pencil className="mr-2 h-4 w-4" /> Edit
+            </Button>
             {store.status !== "approved" && (
               <Button onClick={handleApprove} className="bg-green-600 hover:bg-green-700" disabled={approveMutation.isPending}>
                 <CheckCircle className="mr-2 h-4 w-4" /> Approve

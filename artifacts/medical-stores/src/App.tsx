@@ -17,6 +17,7 @@ import EditStore from "@/pages/owner/stores/edit";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminStoreDetail from "@/pages/admin/stores/detail";
+import AdminEditStore from "@/pages/admin/stores/edit";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,11 @@ function Router() {
         <Route path="/admin/dashboard">
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminDashboard />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/admin/stores/:id/edit">
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminEditStore />
           </ProtectedRoute>
         </Route>
         <Route path="/admin/stores/:id">
