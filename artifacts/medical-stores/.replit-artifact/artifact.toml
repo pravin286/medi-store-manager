@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "MedStore Directory"
+version = "1.0.0"
+id = "artifacts/medical-stores"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24466
+
+[services.development]
+run = "pnpm --filter @workspace/medical-stores run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/medical-stores", "run", "build" ]
+publicDir = "artifacts/medical-stores/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24466"
+BASE_PATH = "/"
