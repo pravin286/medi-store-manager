@@ -66,6 +66,8 @@ export interface Store {
   longitude: number | null;
   /** @nullable */
   imageUrl: string | null;
+  /** @nullable */
+  whatsappNumber: string | null;
   discountPercentage: number;
   status: StoreStatus;
   /** @nullable */
@@ -87,6 +89,8 @@ export interface CreateStoreBody {
   longitude?: number | null;
   /** @nullable */
   imageUrl?: string | null;
+  /** @nullable */
+  whatsappNumber?: string | null;
   discountPercentage: number;
 }
 
@@ -102,6 +106,8 @@ export interface UpdateStoreBody {
   longitude?: number | null;
   /** @nullable */
   imageUrl?: string | null;
+  /** @nullable */
+  whatsappNumber?: string | null;
   discountPercentage?: number;
 }
 

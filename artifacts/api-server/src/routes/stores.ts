@@ -53,6 +53,7 @@ function formatStore(store: typeof storesTable.$inferSelect) {
     latitude: store.latitude != null ? Number(store.latitude) : null,
     longitude: store.longitude != null ? Number(store.longitude) : null,
     imageUrl: store.imageUrl,
+    whatsappNumber: store.whatsappNumber,
     discountPercentage: Number(store.discountPercentage),
     status: store.status,
     rejectionReason: store.rejectionReason,
@@ -122,7 +123,7 @@ router.post("/stores", requireAuth, async (req: AuthRequest, res): Promise<void>
   }
 
   const user = req.user!;
-  const { storeName, ownerName, address, city, latitude, longitude, imageUrl, discountPercentage } = parsed.data;
+  const { storeName, ownerName, address, city, latitude, longitude, imageUrl, whatsappNumber, discountPercentage } = parsed.data;
 
   const [store] = await db.insert(storesTable).values({
     storeName,
@@ -132,6 +133,7 @@ router.post("/stores", requireAuth, async (req: AuthRequest, res): Promise<void>
     latitude: latitude != null ? String(latitude) : null,
     longitude: longitude != null ? String(longitude) : null,
     imageUrl: imageUrl ?? null,
+    whatsappNumber: whatsappNumber ?? null,
     discountPercentage: String(discountPercentage),
     status: "pending",
     ownerId: user.id,
@@ -197,6 +199,7 @@ router.patch("/stores/:id", requireAuth, async (req: AuthRequest, res): Promise<
   if (parsed.data.latitude !== undefined) updateData.latitude = parsed.data.latitude != null ? String(parsed.data.latitude) : null;
   if (parsed.data.longitude !== undefined) updateData.longitude = parsed.data.longitude != null ? String(parsed.data.longitude) : null;
   if (parsed.data.imageUrl !== undefined) updateData.imageUrl = parsed.data.imageUrl;
+  if (parsed.data.whatsappNumber !== undefined) updateData.whatsappNumber = parsed.data.whatsappNumber;
   if (parsed.data.discountPercentage != null) updateData.discountPercentage = String(parsed.data.discountPercentage);
 
   const [updated] = await db.update(storesTable).set(updateData).where(eq(storesTable.id, paramsResult.data.id)).returning();

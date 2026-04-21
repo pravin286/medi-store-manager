@@ -30,6 +30,7 @@ const formSchema = z.object({
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
   imageUrl: z.string().nullable(),
+  whatsappNumber: z.string().nullable(),
 });
 
 type StoreFormValues = z.infer<typeof formSchema>;
@@ -56,6 +57,7 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
       latitude: initialData?.latitude || null,
       longitude: initialData?.longitude || null,
       imageUrl: initialData?.imageUrl || null,
+      whatsappNumber: initialData?.whatsappNumber || null,
     },
   });
 
@@ -136,6 +138,29 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
                       <FormControl>
                         <Input placeholder="John Smith" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="whatsappNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>WhatsApp Number</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          placeholder="+919876543210"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value || null)}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Include country code (e.g. +91 for India). Customers will message you on WhatsApp.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

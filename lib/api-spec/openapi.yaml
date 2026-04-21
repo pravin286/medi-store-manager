@@ -595,6 +595,8 @@ components:
           type: ["number", "null"]
         imageUrl:
           type: ["string", "null"]
+        whatsappNumber:
+          type: ["string", "null"]
         discountPercentage:
           type: number
         status:
@@ -619,6 +621,7 @@ components:
         - latitude
         - longitude
         - imageUrl
+        - whatsappNumber
         - discountPercentage
         - status
         - rejectionReason
@@ -642,6 +645,8 @@ components:
         longitude:
           type: ["number", "null"]
         imageUrl:
+          type: ["string", "null"]
+        whatsappNumber:
           type: ["string", "null"]
         discountPercentage:
           type: number
@@ -667,6 +672,8 @@ components:
         longitude:
           type: ["number", "null"]
         imageUrl:
+          type: ["string", "null"]
+        whatsappNumber:
           type: ["string", "null"]
         discountPercentage:
           type: number

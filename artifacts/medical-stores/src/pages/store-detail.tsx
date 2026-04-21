@@ -3,7 +3,8 @@ import { useGetStore } from "@workspace/api-client-react";
 import { Map } from "@/components/map";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, User, Store as StoreIcon, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MapPin, User, Store as StoreIcon, Calendar, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function StoreDetail() {
@@ -39,6 +40,12 @@ export default function StoreDetail() {
   const mapCenter: [number, number] = store.latitude && store.longitude 
     ? [store.latitude, store.longitude] 
     : [40.7128, -74.0060];
+
+  const whatsappHref = store.whatsappNumber
+    ? `https://wa.me/${store.whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+        `Hi, I'm interested in your store "${store.storeName}" listed on MediDirectory.`
+      )}`
+    : null;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -122,6 +129,29 @@ export default function StoreDetail() {
                   </div>
                 </div>
               </div>
+
+              {whatsappHref ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full mt-4 rounded-full bg-[#25D366] hover:bg-[#1ebd5a] text-white font-semibold shadow-lg shadow-[#25D366]/30 border-0"
+                >
+                  <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    Contact on WhatsApp
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  disabled
+                  className="w-full mt-4 rounded-full bg-muted text-muted-foreground"
+                  title="This store has not added a WhatsApp number yet"
+                >
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  WhatsApp not available
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

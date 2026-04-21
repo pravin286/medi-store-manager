@@ -12,6 +12,7 @@ export const storesTable = pgTable("stores", {
   latitude: numeric("latitude", { precision: 10, scale: 7 }),
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
   imageUrl: text("image_url"),
+  whatsappNumber: text("whatsapp_number"),
   discountPercentage: numeric("discount_percentage", { precision: 5, scale: 2 }).notNull().default("0"),
   status: text("status").notNull().default("pending"),
   rejectionReason: text("rejection_reason"),
