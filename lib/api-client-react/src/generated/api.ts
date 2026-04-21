@@ -1213,6 +1213,79 @@ export function useAdminListStores<
 }
 
 /**
+ * @summary List distinct cities of approved stores
+ */
+export const getListCitiesUrl = () => {
+  return `/api/stores/cities`;
+};
+
+export const listCities = async (options?: RequestInit): Promise<string[]> => {
+  return customFetch<string[]>(getListCitiesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCitiesQueryKey = () => {
+  return [`/api/stores/cities`] as const;
+};
+
+export const getListCitiesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCities>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listCities>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCitiesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCities>>> = ({
+    signal,
+  }) => listCities({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCities>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCitiesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCities>>
+>;
+export type ListCitiesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List distinct cities of approved stores
+ */
+
+export function useListCities<
+  TData = Awaited<ReturnType<typeof listCities>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listCities>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCitiesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Get admin dashboard statistics
  */
 export const getGetAdminStatsUrl = () => {

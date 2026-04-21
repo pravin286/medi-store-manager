@@ -143,6 +143,10 @@ paths:
           schema:
             type: string
         - in: query
+          name: city
+          schema:
+            type: string
+        - in: query
           name: minDiscount
           schema:
             type: number
@@ -447,6 +451,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /stores/cities:
+    get:
+      operationId: listCities
+      tags: [stores]
+      summary: List distinct cities of approved stores
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
   /admin/stats:
     get:
       operationId: getAdminStats
@@ -568,6 +587,8 @@ components:
           type: string
         address:
           type: string
+        city:
+          type: ["string", "null"]
         latitude:
           type: ["number", "null"]
         longitude:
@@ -594,6 +615,7 @@ components:
         - storeName
         - ownerName
         - address
+        - city
         - latitude
         - longitude
         - imageUrl
@@ -613,6 +635,8 @@ components:
           type: string
         address:
           type: string
+        city:
+          type: ["string", "null"]
         latitude:
           type: ["number", "null"]
         longitude:
@@ -636,6 +660,8 @@ components:
           type: string
         address:
           type: string
+        city:
+          type: ["string", "null"]
         latitude:
           type: ["number", "null"]
         longitude:

@@ -1,20 +1,42 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListStores } from "@workspace/api-client-react";
+import { useListStores, useListCities } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Store as StoreIcon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Search, MapPin, Store as StoreIcon, X } from "lucide-react";
+
+const ALL_CITIES = "__all__";
 
 export default function Home() {
   const [search, setSearch] = useState("");
+  const [city, setCity] = useState<string>(ALL_CITIES);
   const [minDiscount, setMinDiscount] = useState<number[]>([0]);
+
+  const { data: cities } = useListCities();
 
   const { data: stores, isLoading } = useListStores({
     search: search || undefined,
+    city: city !== ALL_CITIES ? city : undefined,
     minDiscount: minDiscount[0] > 0 ? minDiscount[0] : undefined,
   });
+
+  const hasActiveFilters = search || city !== ALL_CITIES || minDiscount[0] > 0;
+
+  const clearFilters = () => {
+    setSearch("");
+    setCity(ALL_CITIES);
+    setMinDiscount([0]);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -27,20 +49,40 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-4 mb-8">
-        <div className="md:col-span-3">
+      <div className="grid gap-4 md:grid-cols-12 mb-8">
+        <div className="md:col-span-5">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search by store name or address..."
+              placeholder="Search by store name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 h-12 text-base"
             />
           </div>
         </div>
-        <div className="space-y-3 p-4 bg-card rounded-lg border shadow-sm flex flex-col justify-center">
+
+        <div className="md:col-span-3">
+          <Select value={city} onValueChange={setCity}>
+            <SelectTrigger className="h-12 text-base">
+              <div className="flex items-center gap-2 truncate">
+                <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="All cities" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_CITIES}>All cities</SelectItem>
+              {(cities || []).map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="md:col-span-4 space-y-3 p-4 bg-card rounded-lg border shadow-sm flex flex-col justify-center">
           <div className="flex justify-between items-center">
             <label className="text-sm font-medium">Min Discount</label>
             <span className="text-sm font-bold text-primary">{minDiscount[0]}%</span>
@@ -53,6 +95,28 @@ export default function Home() {
           />
         </div>
       </div>
+
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
+          <span>Active filters:</span>
+          {city !== ALL_CITIES && (
+            <Badge variant="secondary" className="gap-1">
+              <MapPin className="h-3 w-3" /> {city}
+            </Badge>
+          )}
+          {search && (
+            <Badge variant="secondary" className="gap-1">
+              <Search className="h-3 w-3" /> {search}
+            </Badge>
+          )}
+          {minDiscount[0] > 0 && (
+            <Badge variant="secondary">Min {minDiscount[0]}% off</Badge>
+          )}
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 ml-1">
+            <X className="h-3 w-3 mr-1" /> Clear
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -93,6 +157,12 @@ export default function Home() {
                   {store.discountPercentage > 0 && (
                     <Badge className="absolute top-3 right-3 bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-1 text-sm shadow-sm">
                       {store.discountPercentage}% OFF
+                    </Badge>
+                  )}
+                  {store.city && (
+                    <Badge variant="secondary" className="absolute top-3 left-3 bg-white/90 text-foreground gap-1 shadow-sm">
+                      <MapPin className="h-3 w-3" />
+                      {store.city}
                     </Badge>
                   )}
                 </div>

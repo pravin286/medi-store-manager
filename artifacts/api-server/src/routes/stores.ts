@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, storesTable } from "@workspace/db";
-import { eq, and, ilike, gte, lte, avg, count, desc } from "drizzle-orm";
+import { eq, and, ilike, gte, lte, avg, count, desc, sql, isNotNull } from "drizzle-orm";
 import {
   CreateStoreBody,
   UpdateStoreBody,
@@ -49,6 +49,7 @@ function formatStore(store: typeof storesTable.$inferSelect) {
     storeName: store.storeName,
     ownerName: store.ownerName,
     address: store.address,
+    city: store.city,
     latitude: store.latitude != null ? Number(store.latitude) : null,
     longitude: store.longitude != null ? Number(store.longitude) : null,
     imageUrl: store.imageUrl,
@@ -85,6 +86,7 @@ router.get("/uploads/:filename", async (req, res): Promise<void> => {
 router.get("/stores", async (req, res): Promise<void> => {
   const params = ListStoresQueryParams.safeParse(req.query);
   const search = params.success ? params.data.search : undefined;
+  const city = params.success ? params.data.city : undefined;
   const minDiscount = params.success ? params.data.minDiscount : undefined;
   const maxDiscount = params.success ? params.data.maxDiscount : undefined;
 
@@ -92,6 +94,7 @@ router.get("/stores", async (req, res): Promise<void> => {
     and(
       eq(storesTable.status, "approved"),
       search ? ilike(storesTable.storeName, `%${search}%`) : undefined,
+      city ? ilike(storesTable.city, city) : undefined,
       minDiscount != null ? gte(storesTable.discountPercentage, String(minDiscount)) : undefined,
       maxDiscount != null ? lte(storesTable.discountPercentage, String(maxDiscount)) : undefined,
     )
@@ -99,6 +102,16 @@ router.get("/stores", async (req, res): Promise<void> => {
 
   const stores = await query;
   res.json(stores.map(formatStore));
+});
+
+router.get("/stores/cities", async (_req, res): Promise<void> => {
+  const rows = await db
+    .selectDistinct({ city: storesTable.city })
+    .from(storesTable)
+    .where(and(eq(storesTable.status, "approved"), isNotNull(storesTable.city)))
+    .orderBy(storesTable.city);
+  const cities = rows.map((r) => r.city).filter((c): c is string => !!c);
+  res.json(cities);
 });
 
 router.post("/stores", requireAuth, async (req: AuthRequest, res): Promise<void> => {
@@ -109,12 +122,13 @@ router.post("/stores", requireAuth, async (req: AuthRequest, res): Promise<void>
   }
 
   const user = req.user!;
-  const { storeName, ownerName, address, latitude, longitude, imageUrl, discountPercentage } = parsed.data;
+  const { storeName, ownerName, address, city, latitude, longitude, imageUrl, discountPercentage } = parsed.data;
 
   const [store] = await db.insert(storesTable).values({
     storeName,
     ownerName,
     address,
+    city: city ?? null,
     latitude: latitude != null ? String(latitude) : null,
     longitude: longitude != null ? String(longitude) : null,
     imageUrl: imageUrl ?? null,
@@ -179,6 +193,7 @@ router.patch("/stores/:id", requireAuth, async (req: AuthRequest, res): Promise<
   if (parsed.data.storeName != null) updateData.storeName = parsed.data.storeName;
   if (parsed.data.ownerName != null) updateData.ownerName = parsed.data.ownerName;
   if (parsed.data.address != null) updateData.address = parsed.data.address;
+  if (parsed.data.city !== undefined) updateData.city = parsed.data.city;
   if (parsed.data.latitude !== undefined) updateData.latitude = parsed.data.latitude != null ? String(parsed.data.latitude) : null;
   if (parsed.data.longitude !== undefined) updateData.longitude = parsed.data.longitude != null ? String(parsed.data.longitude) : null;
   if (parsed.data.imageUrl !== undefined) updateData.imageUrl = parsed.data.imageUrl;

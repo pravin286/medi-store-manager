@@ -59,6 +59,8 @@ export interface Store {
   ownerName: string;
   address: string;
   /** @nullable */
+  city: string | null;
+  /** @nullable */
   latitude: number | null;
   /** @nullable */
   longitude: number | null;
@@ -78,6 +80,8 @@ export interface CreateStoreBody {
   ownerName: string;
   address: string;
   /** @nullable */
+  city?: string | null;
+  /** @nullable */
   latitude?: number | null;
   /** @nullable */
   longitude?: number | null;
@@ -90,6 +94,8 @@ export interface UpdateStoreBody {
   storeName?: string;
   ownerName?: string;
   address?: string;
+  /** @nullable */
+  city?: string | null;
   /** @nullable */
   latitude?: number | null;
   /** @nullable */
@@ -114,6 +120,7 @@ export interface AdminStats {
 
 export type ListStoresParams = {
   search?: string;
+  city?: string;
   minDiscount?: number;
   maxDiscount?: number;
 };

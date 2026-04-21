@@ -78,6 +78,7 @@ export const GetMeResponse = zod.object({
  */
 export const ListStoresQueryParams = zod.object({
   search: zod.coerce.string().optional(),
+  city: zod.coerce.string().optional(),
   minDiscount: zod.coerce.number().optional(),
   maxDiscount: zod.coerce.number().optional(),
 });
@@ -87,6 +88,7 @@ export const ListStoresResponseItem = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullable(),
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
@@ -106,6 +108,7 @@ export const CreateStoreBody = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullish(),
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
@@ -120,6 +123,7 @@ export const ListMyStoresResponseItem = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullable(),
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
@@ -144,6 +148,7 @@ export const GetStoreResponse = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullable(),
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
@@ -166,6 +171,7 @@ export const UpdateStoreBody = zod.object({
   storeName: zod.string().optional(),
   ownerName: zod.string().optional(),
   address: zod.string().optional(),
+  city: zod.string().nullish(),
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
@@ -177,6 +183,7 @@ export const UpdateStoreResponse = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullable(),
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
@@ -207,6 +214,7 @@ export const ApproveStoreResponse = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullable(),
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
@@ -234,6 +242,7 @@ export const RejectStoreResponse = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullable(),
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
@@ -258,6 +267,7 @@ export const AdminListStoresResponseItem = zod.object({
   storeName: zod.string(),
   ownerName: zod.string(),
   address: zod.string(),
+  city: zod.string().nullable(),
   latitude: zod.number().nullable(),
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
@@ -269,6 +279,12 @@ export const AdminListStoresResponseItem = zod.object({
   updatedAt: zod.coerce.date(),
 });
 export const AdminListStoresResponse = zod.array(AdminListStoresResponseItem);
+
+/**
+ * @summary List distinct cities of approved stores
+ */
+export const ListCitiesResponseItem = zod.string();
+export const ListCitiesResponse = zod.array(ListCitiesResponseItem);
 
 /**
  * @summary Get admin dashboard statistics
@@ -285,6 +301,7 @@ export const GetAdminStatsResponse = zod.object({
       storeName: zod.string(),
       ownerName: zod.string(),
       address: zod.string(),
+      city: zod.string().nullable(),
       latitude: zod.number().nullable(),
       longitude: zod.number().nullable(),
       imageUrl: zod.string().nullable(),

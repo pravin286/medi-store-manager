@@ -25,6 +25,7 @@ const formSchema = z.object({
   storeName: z.string().min(2, "Store name is required"),
   ownerName: z.string().min(2, "Owner name is required"),
   address: z.string().min(5, "Address is required"),
+  city: z.string().min(2, "City is required"),
   discountPercentage: z.number().min(0).max(100),
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
@@ -50,6 +51,7 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
       storeName: initialData?.storeName || "",
       ownerName: initialData?.ownerName || "",
       address: initialData?.address || "",
+      city: initialData?.city || "",
       discountPercentage: initialData?.discountPercentage || 0,
       latitude: initialData?.latitude || null,
       longitude: initialData?.longitude || null,
@@ -230,8 +232,25 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
                     <FormItem>
                       <FormLabel>Full Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="123 Main St, City, State, ZIP" {...field} />
+                        <Input placeholder="123 Main St, Area, State, ZIP" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Mumbai" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Customers can filter the directory by city.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
