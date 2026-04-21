@@ -4,7 +4,7 @@ import { Map } from "@/components/map";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, User, Store as StoreIcon, Calendar, MessageCircle } from "lucide-react";
+import { MapPin, User, Store as StoreIcon, Calendar, MessageCircle, Siren } from "lucide-react";
 import { format } from "date-fns";
 
 export default function StoreDetail() {
@@ -49,6 +49,18 @@ export default function StoreDetail() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {store.is24x7 && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-rose-100/40 p-4 shadow-sm">
+          <span className="relative grid place-items-center w-10 h-10 rounded-full bg-rose-500 text-white shrink-0">
+            <Siren className="h-5 w-5" />
+            <span className="absolute inset-0 rounded-full bg-rose-400/60 animate-ping" />
+          </span>
+          <div>
+            <p className="font-semibold text-rose-700">Emergency Pharmacy — Open 24×7</p>
+            <p className="text-sm text-rose-600/80">This store is available round the clock for urgent medical needs.</p>
+          </div>
+        </div>
+      )}
       <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">

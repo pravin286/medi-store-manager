@@ -81,6 +81,7 @@ export const ListStoresQueryParams = zod.object({
   city: zod.coerce.string().optional(),
   minDiscount: zod.coerce.number().optional(),
   maxDiscount: zod.coerce.number().optional(),
+  is24x7: zod.coerce.boolean().optional(),
 });
 
 export const ListStoresResponseItem = zod.object({
@@ -93,6 +94,7 @@ export const ListStoresResponseItem = zod.object({
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
   whatsappNumber: zod.string().nullable(),
+  is24x7: zod.boolean(),
   discountPercentage: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   rejectionReason: zod.string().nullable(),
@@ -114,6 +116,7 @@ export const CreateStoreBody = zod.object({
   longitude: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
   whatsappNumber: zod.string().nullish(),
+  is24x7: zod.boolean().optional(),
   discountPercentage: zod.number(),
 });
 
@@ -130,6 +133,7 @@ export const ListMyStoresResponseItem = zod.object({
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
   whatsappNumber: zod.string().nullable(),
+  is24x7: zod.boolean(),
   discountPercentage: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   rejectionReason: zod.string().nullable(),
@@ -156,6 +160,7 @@ export const GetStoreResponse = zod.object({
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
   whatsappNumber: zod.string().nullable(),
+  is24x7: zod.boolean(),
   discountPercentage: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   rejectionReason: zod.string().nullable(),
@@ -180,6 +185,7 @@ export const UpdateStoreBody = zod.object({
   longitude: zod.number().nullish(),
   imageUrl: zod.string().nullish(),
   whatsappNumber: zod.string().nullish(),
+  is24x7: zod.boolean().optional(),
   discountPercentage: zod.number().optional(),
 });
 
@@ -193,6 +199,7 @@ export const UpdateStoreResponse = zod.object({
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
   whatsappNumber: zod.string().nullable(),
+  is24x7: zod.boolean(),
   discountPercentage: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   rejectionReason: zod.string().nullable(),
@@ -225,6 +232,7 @@ export const ApproveStoreResponse = zod.object({
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
   whatsappNumber: zod.string().nullable(),
+  is24x7: zod.boolean(),
   discountPercentage: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   rejectionReason: zod.string().nullable(),
@@ -254,6 +262,7 @@ export const RejectStoreResponse = zod.object({
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
   whatsappNumber: zod.string().nullable(),
+  is24x7: zod.boolean(),
   discountPercentage: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   rejectionReason: zod.string().nullable(),
@@ -280,6 +289,7 @@ export const AdminListStoresResponseItem = zod.object({
   longitude: zod.number().nullable(),
   imageUrl: zod.string().nullable(),
   whatsappNumber: zod.string().nullable(),
+  is24x7: zod.boolean(),
   discountPercentage: zod.number(),
   status: zod.enum(["pending", "approved", "rejected"]),
   rejectionReason: zod.string().nullable(),
@@ -315,6 +325,7 @@ export const GetAdminStatsResponse = zod.object({
       longitude: zod.number().nullable(),
       imageUrl: zod.string().nullable(),
       whatsappNumber: zod.string().nullable(),
+      is24x7: zod.boolean(),
       discountPercentage: zod.number(),
       status: zod.enum(["pending", "approved", "rejected"]),
       rejectionReason: zod.string().nullable(),

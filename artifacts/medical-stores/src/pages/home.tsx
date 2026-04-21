@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Tag,
   ArrowRight,
+  Siren,
 } from "lucide-react";
 
 const ALL_CITIES = "__all__";
@@ -30,6 +31,7 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [city, setCity] = useState<string>(ALL_CITIES);
   const [minDiscount, setMinDiscount] = useState<number[]>([0]);
+  const [emergencyOnly, setEmergencyOnly] = useState(false);
 
   const { data: cities } = useListCities();
 
@@ -37,14 +39,16 @@ export default function Home() {
     search: search || undefined,
     city: city !== ALL_CITIES ? city : undefined,
     minDiscount: minDiscount[0] > 0 ? minDiscount[0] : undefined,
+    is24x7: emergencyOnly ? true : undefined,
   });
 
-  const hasActiveFilters = search || city !== ALL_CITIES || minDiscount[0] > 0;
+  const hasActiveFilters = search || city !== ALL_CITIES || minDiscount[0] > 0 || emergencyOnly;
 
   const clearFilters = () => {
     setSearch("");
     setCity(ALL_CITIES);
     setMinDiscount([0]);
+    setEmergencyOnly(false);
   };
 
   return (
@@ -123,6 +127,26 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-2">
+          <button
+            type="button"
+            onClick={() => setEmergencyOnly((v) => !v)}
+            className={`group inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+              emergencyOnly
+                ? "bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/30"
+                : "bg-white text-rose-600 border-rose-200 hover:border-rose-400 hover:bg-rose-50"
+            }`}
+          >
+            <span className={`relative grid place-items-center w-5 h-5 rounded-full ${emergencyOnly ? "bg-white/20" : "bg-rose-100 group-hover:bg-rose-200"}`}>
+              <Siren className={`h-3 w-3 ${emergencyOnly ? "text-white" : "text-rose-500"}`} />
+              {!emergencyOnly && (
+                <span className="absolute inset-0 rounded-full bg-rose-400/40 animate-ping" />
+              )}
+            </span>
+            Emergency Mode — 24/7 stores only
+          </button>
+        </div>
+
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-2 mt-4 text-sm text-muted-foreground px-2">
             <span className="font-medium text-foreground">Filters:</span>
@@ -139,6 +163,11 @@ export default function Home() {
             {minDiscount[0] > 0 && (
               <Badge variant="secondary" className="gap-1 rounded-full bg-emerald-50 text-emerald-700 border-emerald-100">
                 <Tag className="h-3 w-3" /> Min {minDiscount[0]}% off
+              </Badge>
+            )}
+            {emergencyOnly && (
+              <Badge variant="secondary" className="gap-1 rounded-full bg-rose-50 text-rose-700 border-rose-100">
+                <Siren className="h-3 w-3" /> 24/7 only
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 ml-1 rounded-full text-xs">
@@ -187,7 +216,9 @@ export default function Home() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {stores?.map((store) => (
             <Link key={store.id} href={`/stores/${store.id}`}>
-              <Card className="overflow-hidden card-hover cursor-pointer h-full flex flex-col group border-border/60 bg-white">
+              <Card className={`overflow-hidden card-hover cursor-pointer h-full flex flex-col group bg-white ${
+                store.is24x7 ? "border-rose-300 ring-2 ring-rose-200/60 shadow-md shadow-rose-100" : "border-border/60"
+              }`}>
                 <div className="relative h-52 bg-muted overflow-hidden">
                   {store.imageUrl ? (
                     <img
@@ -215,6 +246,14 @@ export default function Home() {
                     >
                       <MapPin className="h-3 w-3 text-sky-500" />
                       {store.city}
+                    </Badge>
+                  )}
+                  {store.is24x7 && (
+                    <Badge
+                      className="absolute bottom-3 left-3 bg-rose-500 hover:bg-rose-500 text-white gap-1 shadow-lg shadow-rose-500/40 border-0 font-bold"
+                    >
+                      <Siren className="h-3 w-3" />
+                      24/7 OPEN
                     </Badge>
                   )}
                 </div>

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, numeric, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -13,6 +13,7 @@ export const storesTable = pgTable("stores", {
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
   imageUrl: text("image_url"),
   whatsappNumber: text("whatsapp_number"),
+  is24x7: boolean("is_24x7").notNull().default(false),
   discountPercentage: numeric("discount_percentage", { precision: 5, scale: 2 }).notNull().default("0"),
   status: text("status").notNull().default("pending"),
   rejectionReason: text("rejection_reason"),

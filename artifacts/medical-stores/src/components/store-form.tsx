@@ -31,6 +31,7 @@ const formSchema = z.object({
   longitude: z.number().nullable(),
   imageUrl: z.string().nullable(),
   whatsappNumber: z.string().nullable(),
+  is24x7: z.boolean(),
 });
 
 type StoreFormValues = z.infer<typeof formSchema>;
@@ -58,6 +59,7 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
       longitude: initialData?.longitude || null,
       imageUrl: initialData?.imageUrl || null,
       whatsappNumber: initialData?.whatsappNumber || null,
+      is24x7: initialData?.is24x7 ?? false,
     },
   });
 
@@ -162,6 +164,34 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
                         Include country code (e.g. +91 for India). Customers will message you on WhatsApp.
                       </FormDescription>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is24x7"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-rose-50/50 border-rose-100">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2 text-rose-700">
+                          <span className="grid place-items-center w-7 h-7 rounded-full bg-rose-500 text-white">
+                            <span className="text-xs font-bold">24/7</span>
+                          </span>
+                          Emergency / 24×7 Store
+                        </FormLabel>
+                        <FormDescription>
+                          Mark this store as open round the clock for emergencies.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={!!field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          className="h-5 w-5 rounded border-input accent-rose-500 cursor-pointer"
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />

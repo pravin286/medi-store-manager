@@ -154,6 +154,10 @@ paths:
           name: maxDiscount
           schema:
             type: number
+        - in: query
+          name: is24x7
+          schema:
+            type: boolean
       responses:
         "200":
           description: OK
@@ -597,6 +601,8 @@ components:
           type: ["string", "null"]
         whatsappNumber:
           type: ["string", "null"]
+        is24x7:
+          type: boolean
         discountPercentage:
           type: number
         status:
@@ -622,6 +628,7 @@ components:
         - longitude
         - imageUrl
         - whatsappNumber
+        - is24x7
         - discountPercentage
         - status
         - rejectionReason
@@ -648,6 +655,8 @@ components:
           type: ["string", "null"]
         whatsappNumber:
           type: ["string", "null"]
+        is24x7:
+          type: boolean
         discountPercentage:
           type: number
       required:
@@ -675,6 +684,8 @@ components:
           type: ["string", "null"]
         whatsappNumber:
           type: ["string", "null"]
+        is24x7:
+          type: boolean
         discountPercentage:
           type: number
 

@@ -68,6 +68,7 @@ export interface Store {
   imageUrl: string | null;
   /** @nullable */
   whatsappNumber: string | null;
+  is24x7: boolean;
   discountPercentage: number;
   status: StoreStatus;
   /** @nullable */
@@ -91,6 +92,7 @@ export interface CreateStoreBody {
   imageUrl?: string | null;
   /** @nullable */
   whatsappNumber?: string | null;
+  is24x7?: boolean;
   discountPercentage: number;
 }
 
@@ -108,6 +110,7 @@ export interface UpdateStoreBody {
   imageUrl?: string | null;
   /** @nullable */
   whatsappNumber?: string | null;
+  is24x7?: boolean;
   discountPercentage?: number;
 }
 
@@ -129,6 +132,7 @@ export type ListStoresParams = {
   city?: string;
   minDiscount?: number;
   maxDiscount?: number;
+  is24x7?: boolean;
 };
 
 export type AdminListStoresParams = {

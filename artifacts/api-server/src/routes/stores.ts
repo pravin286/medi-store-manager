@@ -54,6 +54,7 @@ function formatStore(store: typeof storesTable.$inferSelect) {
     longitude: store.longitude != null ? Number(store.longitude) : null,
     imageUrl: store.imageUrl,
     whatsappNumber: store.whatsappNumber,
+    is24x7: store.is24x7,
     discountPercentage: Number(store.discountPercentage),
     status: store.status,
     rejectionReason: store.rejectionReason,
@@ -90,6 +91,7 @@ router.get("/stores", async (req, res): Promise<void> => {
   const city = params.success ? params.data.city : undefined;
   const minDiscount = params.success ? params.data.minDiscount : undefined;
   const maxDiscount = params.success ? params.data.maxDiscount : undefined;
+  const is24x7 = params.success ? params.data.is24x7 : undefined;
 
   let query = db.select().from(storesTable).where(
     and(
@@ -98,6 +100,7 @@ router.get("/stores", async (req, res): Promise<void> => {
       city ? ilike(storesTable.city, city) : undefined,
       minDiscount != null ? gte(storesTable.discountPercentage, String(minDiscount)) : undefined,
       maxDiscount != null ? lte(storesTable.discountPercentage, String(maxDiscount)) : undefined,
+      is24x7 === true ? eq(storesTable.is24x7, true) : undefined,
     )
   ).$dynamic();
 
@@ -123,7 +126,7 @@ router.post("/stores", requireAuth, async (req: AuthRequest, res): Promise<void>
   }
 
   const user = req.user!;
-  const { storeName, ownerName, address, city, latitude, longitude, imageUrl, whatsappNumber, discountPercentage } = parsed.data;
+  const { storeName, ownerName, address, city, latitude, longitude, imageUrl, whatsappNumber, is24x7, discountPercentage } = parsed.data;
 
   const [store] = await db.insert(storesTable).values({
     storeName,
@@ -134,6 +137,7 @@ router.post("/stores", requireAuth, async (req: AuthRequest, res): Promise<void>
     longitude: longitude != null ? String(longitude) : null,
     imageUrl: imageUrl ?? null,
     whatsappNumber: whatsappNumber ?? null,
+    is24x7: is24x7 ?? false,
     discountPercentage: String(discountPercentage),
     status: "pending",
     ownerId: user.id,
@@ -200,6 +204,7 @@ router.patch("/stores/:id", requireAuth, async (req: AuthRequest, res): Promise<
   if (parsed.data.longitude !== undefined) updateData.longitude = parsed.data.longitude != null ? String(parsed.data.longitude) : null;
   if (parsed.data.imageUrl !== undefined) updateData.imageUrl = parsed.data.imageUrl;
   if (parsed.data.whatsappNumber !== undefined) updateData.whatsappNumber = parsed.data.whatsappNumber;
+  if (parsed.data.is24x7 !== undefined) updateData.is24x7 = parsed.data.is24x7;
   if (parsed.data.discountPercentage != null) updateData.discountPercentage = String(parsed.data.discountPercentage);
 
   const [updated] = await db.update(storesTable).set(updateData).where(eq(storesTable.id, paramsResult.data.id)).returning();
