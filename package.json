@@ -2,7 +2,6 @@
   "name": "workspace",
   "version": "0.0.0",
   "license": "MIT",
-  "packageManager": "pnpm@10.22.0",
   "scripts": {
     "build:hostinger": "pnpm --filter @workspace/medical-stores run build",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
@@ -17,10 +16,5 @@
     "lightningcss": "^1.32.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   }
 }
