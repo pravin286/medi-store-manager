@@ -1,7 +1,9 @@
 {
   "name": "workspace",
   "version": "0.0.0",
+  "packageManager": "pnpm@10.12.4",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "build:hostinger": "echo Using committed build artifacts",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
@@ -10,7 +12,6 @@
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "dev": "tsx src/index.ts"
   },
-  "private": true,
   "devDependencies": {
     "@rollup/rollup-win32-x64-msvc": "^4.60.2",
     "lightningcss": "^1.32.0",
