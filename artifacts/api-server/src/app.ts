@@ -10,7 +10,14 @@ import fs from "fs";
 
 const app: Express = express();
 const uploadsDir = path.resolve(process.env.UPLOADS_DIR ?? path.join(process.cwd(), "uploads"));
-const frontendDistDir = path.resolve(process.cwd(), "artifacts", "medical-stores", "dist");
+const deployFrontendDir = path.resolve(process.cwd(), "public");
+const workspaceFrontendDir = path.resolve(process.cwd(), "artifacts", "medical-stores", "dist");
+const frontendDistDir = path.resolve(
+  process.env.FRONTEND_DIST_DIR ??
+    (fs.existsSync(path.join(deployFrontendDir, "index.html"))
+      ? deployFrontendDir
+      : workspaceFrontendDir)
+);
 const frontendIndex = path.join(frontendDistDir, "index.html");
 
 app.use(
