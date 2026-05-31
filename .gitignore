@@ -2,6 +2,10 @@
 
 # compiled output
 dist
+!artifacts/api-server/dist/
+!artifacts/api-server/dist/**
+!artifacts/medical-stores/dist/
+!artifacts/medical-stores/dist/**
 tmp
 out-tsc
 *.tsbuildinfo

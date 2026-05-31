@@ -58,7 +58,10 @@ const router: IRouter = Router();
 
 // ================= IMAGE =================
 router.post("/upload/image", requireAuth, upload.single("image"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No image file provided" });
+  if (!req.file) {
+    res.status(400).json({ error: "No image file provided" });
+    return;
+  }
   res.json({
   url: `${publicApiUrl}/uploads/${req.file.filename}`,
 });
@@ -66,7 +69,10 @@ router.post("/upload/image", requireAuth, upload.single("image"), async (req, re
 
 router.get("/uploads/:filename", async (req, res) => {
   const filePath = path.join(uploadsDir, req.params.filename);
-  if (!fs.existsSync(filePath)) return res.status(404).json({ error: "File not found" });
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: "File not found" });
+    return;
+  }
   res.sendFile(filePath);
 });
 
@@ -105,7 +111,10 @@ router.get("/stores", async (req, res) => {
 // ================= CREATE =================
 router.post("/stores", requireAuth, async (req: AuthRequest, res) => {
   const parsed = CreateStoreBody.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
 
   const user = req.user!;
   const d = parsed.data;
@@ -190,7 +199,8 @@ router.patch("/stores/:id", requireAuth, async (req: AuthRequest, res) => {
 
   const parsed = UpdateStoreBody.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.message });
+    res.status(400).json({ error: parsed.error.message });
+    return;
   }
 
   const body = parsed.data;
@@ -215,7 +225,8 @@ router.patch("/stores/:id", requireAuth, async (req: AuthRequest, res) => {
   );
 
   if (Object.keys(mappedData).length === 0) {
-    return res.status(400).json({ error: "No fields to update" });
+    res.status(400).json({ error: "No fields to update" });
+    return;
   }
 
   const fields = Object.keys(mappedData).map((k) => `${k}=?`);
