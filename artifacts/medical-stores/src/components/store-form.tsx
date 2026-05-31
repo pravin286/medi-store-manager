@@ -21,15 +21,17 @@ import { Upload, MapPin, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 
+const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:4000").replace(/\/$/, "");
+
 const formSchema = z.object({
   storeName: z.string().min(2, "Store name is required"),
   ownerName: z.string().min(2, "Owner name is required"),
   address: z.string().min(5, "Address is required"),
   city: z.string().min(2, "City is required"),
   discountPercentage: z.number().min(0).max(100),
-  latitude: z.number().nullable(),
-  longitude: z.number().nullable(),
-  imageUrl: z.string().nullable(),
+  latitude: z.number().nullable().optional(),
+longitude: z.number().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
   whatsappNumber: z.string().nullable(),
   is24x7: z.boolean(),
 });
@@ -68,8 +70,9 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
   const imageUrl = form.watch("imageUrl");
   const discountPercentage = form.watch("discountPercentage");
 
-  const mapCenter: [number, number] = latitude && longitude 
-    ? [latitude, longitude] 
+  const mapCenter: [number, number] =
+  latitude != null && longitude != null
+    ? [latitude, longitude]
     : [40.7128, -74.0060];
 
   const handleLocationSelect = (lat: number, lng: number) => {
@@ -86,14 +89,20 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
     formData.append("image", file);
 
     try {
-      const response = await fetch("/api/upload/image", {
+      const response = await fetch(`${apiUrl}/api/upload/image`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
       if (!response.ok) throw new Error("Upload failed");
       const res = await response.json() as { url: string };
-      form.setValue("imageUrl", res.url);
+     form.setValue("imageUrl", res.url, {
+  shouldValidate: true,
+  shouldDirty: true,
+  shouldTouch: true,
+});
+
+console.log("✅ IMAGE URL SAVED:", res.url);
       toast({
         title: "Image uploaded successfully",
       });
@@ -110,7 +119,26 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+ <form
+  onSubmit={form.handleSubmit(
+    (data) => {
+      console.log("🔥 SUBMIT WORKING", data);
+const payload = {
+  ...data,
+  whatsappNumber: data.whatsappNumber || "",
+  imageUrl: data.imageUrl || "",
+  city: data.city || "",
+  latitude: data.latitude ?? null,
+  longitude: data.longitude ?? null,
+};
+
+onSubmit(payload);    },
+    (errors) => {
+      console.log("❌ VALIDATION ERRORS", errors);
+    }
+  )}
+>
+
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-6">
             <Card>
@@ -316,14 +344,18 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
                     <Label>Pin Location on Map</Label>
                     <span className="text-xs text-muted-foreground flex items-center">
                       <MapPin className="h-3 w-3 mr-1" />
-                      {latitude && longitude ? "Location selected" : "Click map to set"}
-                    </span>
+{latitude != null && longitude != null
+  ? "Location selected"
+  : "Click map to set"}                    </span>
                   </div>
                   <div className="flex-1 rounded-md overflow-hidden border border-input focus-within:ring-1 focus-within:ring-ring">
                     <Map
                       center={mapCenter}
-                      marker={latitude && longitude ? [latitude, longitude] : undefined}
-                      interactive={true}
+marker={
+  latitude != null && longitude != null
+    ? [latitude, longitude]
+    : undefined
+}                      interactive={true}
                       onLocationSelect={handleLocationSelect}
                       className="w-full h-full min-h-[300px]"
                     />
@@ -332,19 +364,7 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
                     Click on the map to pinpoint your exact store location.
                   </p>
                   
-                  {/* Hidden fields for validation */}
-                  <FormField
-                    control={form.control}
-                    name="latitude"
-                    render={({ field }) => (
-                      <FormItem className="hidden">
-                        <FormControl>
-                          <Input type="hidden" {...field} value={field.value || ""} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+               
                 </div>
               </CardContent>
             </Card>

@@ -1,24 +1,38 @@
 import { Router, type IRouter } from "express";
-import { db, storesTable } from "@workspace/db";
-import { eq, and, ilike, gte, lte, avg, count, desc, sql, isNotNull } from "drizzle-orm";
-import {
-  CreateStoreBody,
-  UpdateStoreBody,
-  GetStoreParams,
-  UpdateStoreParams,
-  DeleteStoreParams,
-  ApproveStoreParams,
-  RejectStoreParams,
-  RejectStoreBody,
-  ListStoresQueryParams,
-  AdminListStoresQueryParams,
-} from "@workspace/api-zod";
+import { db } from "../db";
 import { requireAuth, requireAdmin, type AuthRequest } from "../lib/auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { z } from "zod";
 
-const uploadsDir = path.resolve(process.cwd(), "uploads");
+// ================= LOCAL ZOD SCHEMAS =================
+const CreateStoreBody = z.object({
+  storeName: z.string(),
+  ownerName: z.string(),
+  address: z.string(),
+  city: z.string().optional(),
+  latitude: z.union([z.number(), z.null()]).optional(),
+  longitude: z.union([z.number(), z.null()]).optional(),
+  imageUrl: z.union([z.string(), z.null()]).optional(),
+  whatsappNumber: z.string().optional(),
+  is24x7: z.boolean().optional(),
+  discountPercentage: z.number(),
+});
+
+const UpdateStoreBody = CreateStoreBody.partial();
+
+const ListStoresQueryParams = z.object({
+  search: z.string().optional(),
+  city: z.string().optional(),
+  minDiscount: z.coerce.number().optional(),
+  maxDiscount: z.coerce.number().optional(),
+  is24x7: z.coerce.boolean().optional(),
+});
+
+// ================= FILE UPLOAD =================
+const uploadsDir = path.resolve(process.env.UPLOADS_DIR ?? path.join(process.cwd(), "uploads"));
+const publicApiUrl = (process.env.PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -35,274 +49,250 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only images allowed"));
-    }
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only images allowed"));
   },
 });
 
-function formatStore(store: typeof storesTable.$inferSelect) {
-  return {
-    id: store.id,
-    storeName: store.storeName,
-    ownerName: store.ownerName,
-    address: store.address,
-    city: store.city,
-    latitude: store.latitude != null ? Number(store.latitude) : null,
-    longitude: store.longitude != null ? Number(store.longitude) : null,
-    imageUrl: store.imageUrl,
-    whatsappNumber: store.whatsappNumber,
-    is24x7: store.is24x7,
-    discountPercentage: Number(store.discountPercentage),
-    status: store.status,
-    rejectionReason: store.rejectionReason,
-    ownerId: store.ownerId,
-    createdAt: store.createdAt,
-    updatedAt: store.updatedAt,
-  };
-}
-
 const router: IRouter = Router();
 
-router.post("/upload/image", requireAuth, upload.single("image"), async (req, res): Promise<void> => {
-  if (!req.file) {
-    res.status(400).json({ error: "No image file provided" });
-    return;
-  }
-  const url = `/api/uploads/${req.file.filename}`;
-  res.json({ url });
+// ================= IMAGE =================
+router.post("/upload/image", requireAuth, upload.single("image"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No image file provided" });
+  res.json({
+  url: `${publicApiUrl}/uploads/${req.file.filename}`,
+});
 });
 
-router.get("/uploads/:filename", async (req, res): Promise<void> => {
-  const rawFilename = Array.isArray(req.params.filename) ? req.params.filename[0] : req.params.filename;
-  const filePath = path.join(uploadsDir, rawFilename);
-  if (!fs.existsSync(filePath)) {
-    res.status(404).json({ error: "File not found" });
-    return;
-  }
+router.get("/uploads/:filename", async (req, res) => {
+  const filePath = path.join(uploadsDir, req.params.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: "File not found" });
   res.sendFile(filePath);
 });
 
-router.get("/stores", async (req, res): Promise<void> => {
+// ================= GET STORES =================
+router.get("/stores", async (req, res) => {
   const params = ListStoresQueryParams.safeParse(req.query);
-  const search = params.success ? params.data.search : undefined;
-  const city = params.success ? params.data.city : undefined;
-  const minDiscount = params.success ? params.data.minDiscount : undefined;
-  const maxDiscount = params.success ? params.data.maxDiscount : undefined;
-  const is24x7 = params.success ? params.data.is24x7 : undefined;
+  const { search, city, minDiscount, maxDiscount, is24x7 } = params.success ? params.data : {};
 
-  let query = db.select().from(storesTable).where(
-    and(
-      eq(storesTable.status, "approved"),
-      search ? ilike(storesTable.storeName, `%${search}%`) : undefined,
-      city ? ilike(storesTable.city, city) : undefined,
-      minDiscount != null ? gte(storesTable.discountPercentage, String(minDiscount)) : undefined,
-      maxDiscount != null ? lte(storesTable.discountPercentage, String(maxDiscount)) : undefined,
-      is24x7 === true ? eq(storesTable.is24x7, true) : undefined,
-    )
-  ).$dynamic();
+  let query = "SELECT * FROM stores WHERE status='approved'";
+  const values: any[] = [];
 
-  const stores = await query;
-  res.json(stores.map(formatStore));
+  if (search) {
+    query += " AND city LIKE ?";
+    values.push(`%${search}%`);
+  }
+  if (city) {
+    query += " AND city LIKE ?";
+    values.push(`%${city}%`);
+  }
+  if (minDiscount != null) {
+    query += " AND discount_percentage >= ?";
+    values.push(minDiscount);
+  }
+  if (maxDiscount != null) {
+    query += " AND discount_percentage <= ?";
+    values.push(maxDiscount);
+  }
+  if (is24x7 === true) {
+    query += " AND is_24x7 = 1";
+  }
+
+  const [rows]: any = await db.execute(query, values);
+  res.json(rows);
 });
 
-router.get("/stores/cities", async (_req, res): Promise<void> => {
-  const rows = await db
-    .selectDistinct({ city: storesTable.city })
-    .from(storesTable)
-    .where(and(eq(storesTable.status, "approved"), isNotNull(storesTable.city)))
-    .orderBy(storesTable.city);
-  const cities = rows.map((r) => r.city).filter((c): c is string => !!c);
-  res.json(cities);
-});
-
-router.post("/stores", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+// ================= CREATE =================
+router.post("/stores", requireAuth, async (req: AuthRequest, res) => {
   const parsed = CreateStoreBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+
+  const user = req.user!;
+  const d = parsed.data;
+
+  const [result]: any = await db.execute(
+    `INSERT INTO stores 
+    (store_name, owner_name, address, city, latitude, longitude, image_url, whatsapp_number, is_24x7, discount_percentage, status, owner_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
+    [
+      d.storeName,
+      d.ownerName,
+      d.address,
+      d.city ?? null,
+      d.latitude ?? null,
+      d.longitude ?? null,
+      d.imageUrl ?? null,
+      d.whatsappNumber ?? null,
+      d.is24x7 ?? false,
+      d.discountPercentage,
+      user.id,
+    ]
+  );
+
+  res.status(201).json({ id: result.insertId });
+});
+
+
+
+
+// ================= MY STORES =================
+router.get("/stores/my", requireAuth, async (req: AuthRequest, res) => {
+  const [rows]: any = await db.execute(
+    "SELECT * FROM stores WHERE owner_id=? ORDER BY created_at DESC",
+    [req.user!.id]
+  );
+  res.json(rows);
+});
+
+// ================= GET CITIES =================
+router.get("/stores/cities", async (_req, res): Promise<void> => {
+  try {
+    const [rows]: any = await db.execute(
+      "SELECT DISTINCT city FROM stores"
+    );
+
+    const cities = rows.map((r: any) => r.city);
+    res.json(cities);
+  } catch (error) {
+    console.error("Error fetching cities:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-
-  const user = req.user!;
-  const { storeName, ownerName, address, city, latitude, longitude, imageUrl, whatsappNumber, is24x7, discountPercentage } = parsed.data;
-
-  const [store] = await db.insert(storesTable).values({
-    storeName,
-    ownerName,
-    address,
-    city: city ?? null,
-    latitude: latitude != null ? String(latitude) : null,
-    longitude: longitude != null ? String(longitude) : null,
-    imageUrl: imageUrl ?? null,
-    whatsappNumber: whatsappNumber ?? null,
-    is24x7: is24x7 ?? false,
-    discountPercentage: String(discountPercentage),
-    status: "pending",
-    ownerId: user.id,
-  }).returning();
-
-  res.status(201).json(formatStore(store));
 });
 
-router.get("/stores/my", requireAuth, async (req: AuthRequest, res): Promise<void> => {
-  const user = req.user!;
-  const stores = await db.select().from(storesTable).where(eq(storesTable.ownerId, user.id)).orderBy(desc(storesTable.createdAt));
-  res.json(stores.map(formatStore));
-});
-
+// ================= GET STORE BY ID =================
 router.get("/stores/:id", async (req, res): Promise<void> => {
-  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = GetStoreParams.safeParse({ id: parseInt(rawId, 10) });
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  try {
+    const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = parseInt(rawId, 10);
 
-  const [store] = await db.select().from(storesTable).where(eq(storesTable.id, params.data.id));
-  if (!store) {
-    res.status(404).json({ error: "Store not found" });
-    return;
-  }
+    const [rows]: any = await db.execute(
+      "SELECT * FROM stores WHERE id = ?",
+      [id]
+    );
 
-  res.json(formatStore(store));
+    const store = rows[0];
+
+    if (!store) {
+      res.status(404).json({ error: "Store not found" });
+      return;
+    }
+
+    res.json(store);
+  } catch (error) {
+    console.error("Error fetching store by id:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
-
-router.patch("/stores/:id", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+// ================= UPDATE =================
+router.patch("/stores/:id", requireAuth, async (req: AuthRequest, res) => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const paramsResult = UpdateStoreParams.safeParse({ id: parseInt(rawId, 10) });
-  if (!paramsResult.success) {
-    res.status(400).json({ error: paramsResult.error.message });
-    return;
-  }
+  const id = parseInt(rawId, 10);
 
   const parsed = UpdateStoreBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
+    return res.status(400).json({ error: parsed.error.message });
   }
 
-  const user = req.user!;
-  const [existing] = await db.select().from(storesTable).where(eq(storesTable.id, paramsResult.data.id));
-  if (!existing) {
-    res.status(404).json({ error: "Store not found" });
-    return;
+  const body = parsed.data;
+
+  // 🔥 MAP camelCase → snake_case
+  const mappedData: any = {
+    store_name: body.storeName,
+    owner_name: body.ownerName,
+    address: body.address,
+    city: body.city,
+    latitude: body.latitude,
+    longitude: body.longitude,
+    image_url: body.imageUrl,
+    whatsapp_number: body.whatsappNumber,
+    is_24x7: body.is24x7,
+    discount_percentage: body.discountPercentage,
+  };
+
+  // remove undefined fields (important for partial update)
+  Object.keys(mappedData).forEach(
+    (key) => mappedData[key] === undefined && delete mappedData[key]
+  );
+
+  if (Object.keys(mappedData).length === 0) {
+    return res.status(400).json({ error: "No fields to update" });
   }
 
-  if (user.role !== "admin" && existing.ownerId !== user.id) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
+  const fields = Object.keys(mappedData).map((k) => `${k}=?`);
+  const values = Object.values(mappedData);
 
-  const updateData: Partial<typeof storesTable.$inferInsert> = {};
-  if (parsed.data.storeName != null) updateData.storeName = parsed.data.storeName;
-  if (parsed.data.ownerName != null) updateData.ownerName = parsed.data.ownerName;
-  if (parsed.data.address != null) updateData.address = parsed.data.address;
-  if (parsed.data.city !== undefined) updateData.city = parsed.data.city;
-  if (parsed.data.latitude !== undefined) updateData.latitude = parsed.data.latitude != null ? String(parsed.data.latitude) : null;
-  if (parsed.data.longitude !== undefined) updateData.longitude = parsed.data.longitude != null ? String(parsed.data.longitude) : null;
-  if (parsed.data.imageUrl !== undefined) updateData.imageUrl = parsed.data.imageUrl;
-  if (parsed.data.whatsappNumber !== undefined) updateData.whatsappNumber = parsed.data.whatsappNumber;
-  if (parsed.data.is24x7 !== undefined) updateData.is24x7 = parsed.data.is24x7;
-  if (parsed.data.discountPercentage != null) updateData.discountPercentage = String(parsed.data.discountPercentage);
+  await db.execute(
+    `UPDATE stores SET ${fields.join(",")} WHERE id=?`,
+    [...values, id] as any
+  );
 
-  const [updated] = await db.update(storesTable).set(updateData).where(eq(storesTable.id, paramsResult.data.id)).returning();
-  res.json(formatStore(updated));
+  res.json({ success: true });
 });
 
-router.delete("/stores/:id", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+// ================= DELETE =================
+router.delete("/stores/:id", requireAuth, requireAdmin, async (req, res) => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = DeleteStoreParams.safeParse({ id: parseInt(rawId, 10) });
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  const id = parseInt(rawId, 10);
 
-  const [deleted] = await db.delete(storesTable).where(eq(storesTable.id, params.data.id)).returning();
-  if (!deleted) {
-    res.status(404).json({ error: "Store not found" });
-    return;
-  }
-
+  await db.execute("DELETE FROM stores WHERE id=?", [id]);
   res.sendStatus(204);
 });
 
-router.post("/stores/:id/approve", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+// ================= APPROVE =================
+router.post("/stores/:id/approve", requireAuth, requireAdmin, async (req, res) => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = ApproveStoreParams.safeParse({ id: parseInt(rawId, 10) });
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  const id = parseInt(rawId, 10);
 
-  const [updated] = await db.update(storesTable)
-    .set({ status: "approved", rejectionReason: null })
-    .where(eq(storesTable.id, params.data.id))
-    .returning();
+  await db.execute(
+    "UPDATE stores SET status='approved', rejection_reason=NULL WHERE id=?",
+    [id]
+  );
 
-  if (!updated) {
-    res.status(404).json({ error: "Store not found" });
-    return;
-  }
-
-  res.json(formatStore(updated));
+  res.json({ success: true });
 });
 
-router.post("/stores/:id/reject", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+// ================= REJECT =================
+router.post("/stores/:id/reject", requireAuth, requireAdmin, async (req, res) => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const params = RejectStoreParams.safeParse({ id: parseInt(rawId, 10) });
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  const id = parseInt(rawId, 10);
 
-  const bodyParsed = RejectStoreBody.safeParse(req.body);
-  const reason = bodyParsed.success ? bodyParsed.data.reason : undefined;
+  const reason = req.body.reason ?? null;
 
-  const [updated] = await db.update(storesTable)
-    .set({ status: "rejected", rejectionReason: reason ?? null })
-    .where(eq(storesTable.id, params.data.id))
-    .returning();
+  await db.execute(
+    "UPDATE stores SET status='rejected', rejection_reason=? WHERE id=?",
+    [reason, id]
+  );
 
-  if (!updated) {
-    res.status(404).json({ error: "Store not found" });
-    return;
-  }
-
-  res.json(formatStore(updated));
+  res.json({ success: true });
 });
 
-router.get("/admin/stores", requireAuth, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
-  const params = AdminListStoresQueryParams.safeParse(req.query);
-  const status = params.success ? params.data.status : undefined;
-  const search = params.success ? params.data.search : undefined;
-
-  const stores = await db.select().from(storesTable).where(
-    and(
-      status ? eq(storesTable.status, status) : undefined,
-      search ? ilike(storesTable.storeName, `%${search}%`) : undefined,
-    )
-  ).orderBy(desc(storesTable.createdAt));
-
-  res.json(stores.map(formatStore));
+// ================= ADMIN =================
+router.get("/admin/stores", requireAuth, requireAdmin, async (_req, res) => {
+  const [rows]: any = await db.execute("SELECT * FROM stores ORDER BY created_at DESC");
+  res.json(rows);
 });
 
-router.get("/admin/stats", requireAuth, requireAdmin, async (_req, res): Promise<void> => {
-  const allStores = await db.select().from(storesTable);
-  const totalStores = allStores.length;
-  const pendingStores = allStores.filter((s) => s.status === "pending").length;
-  const approvedStores = allStores.filter((s) => s.status === "approved").length;
-  const rejectedStores = allStores.filter((s) => s.status === "rejected").length;
-  const discounts = allStores.map((s) => Number(s.discountPercentage)).filter((d) => !isNaN(d));
-  const averageDiscount = discounts.length > 0 ? discounts.reduce((a, b) => a + b, 0) / discounts.length : 0;
+router.get("/admin/stats", requireAuth, requireAdmin, async (_req, res) => {
+  const [rows]: any = await db.execute("SELECT * FROM stores");
 
-  const recentActivity = allStores
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 10)
-    .map(formatStore);
+  const totalStores = rows.length;
+  const pendingStores = rows.filter((s: any) => s.status === "pending").length;
+  const approvedStores = rows.filter((s: any) => s.status === "approved").length;
+  const rejectedStores = rows.filter((s: any) => s.status === "rejected").length;
 
-  res.json({ totalStores, pendingStores, approvedStores, rejectedStores, averageDiscount, recentActivity });
+  const discounts = rows.map((s: any) => Number(s.discount_percentage));
+  const avg = discounts.length
+    ? discounts.reduce((a: number, b: number) => a + b, 0) / discounts.length
+    : 0;
+
+  res.json({
+    totalStores,
+    pendingStores,
+    approvedStores,
+    rejectedStores,
+    averageDiscount: avg,
+    recentActivity: rows.slice(0, 10),
+  });
 });
 
 export default router;

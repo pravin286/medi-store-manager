@@ -1,27 +1,40 @@
-import { pgTable, text, serial, timestamp, numeric, integer, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
-import { usersTable } from "./users";
+import { z } from "zod";
 
-export const storesTable = pgTable("stores", {
-  id: serial("id").primaryKey(),
-  storeName: text("store_name").notNull(),
-  ownerName: text("owner_name").notNull(),
-  address: text("address").notNull(),
-  city: text("city"),
-  latitude: numeric("latitude", { precision: 10, scale: 7 }),
-  longitude: numeric("longitude", { precision: 10, scale: 7 }),
-  imageUrl: text("image_url"),
-  whatsappNumber: text("whatsapp_number"),
-  is24x7: boolean("is_24x7").notNull().default(false),
-  discountPercentage: numeric("discount_percentage", { precision: 5, scale: 2 }).notNull().default("0"),
-  status: text("status").notNull().default("pending"),
-  rejectionReason: text("rejection_reason"),
-  ownerId: integer("owner_id").notNull().references(() => usersTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+// Validation schema (same fields as before)
+export const insertStoreSchema = z.object({
+  storeName: z.string(),
+  ownerName: z.string(),
+  address: z.string(),
+  city: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  imageUrl: z.string().optional(),
+  whatsappNumber: z.string().optional(),
+  is24x7: z.boolean().default(false),
+  discountPercentage: z.number().default(0),
+  status: z.string().default("pending"),
+  rejectionReason: z.string().optional(),
+  ownerId: z.number(),
 });
 
-export const insertStoreSchema = createInsertSchema(storesTable).omit({ id: true, createdAt: true, updatedAt: true });
+// Types (same usage as before)
 export type InsertStore = z.infer<typeof insertStoreSchema>;
-export type Store = typeof storesTable.$inferSelect;
+
+export type Store = {
+  id: number;
+  storeName: string;
+  ownerName: string;
+  address: string;
+  city?: string;
+  latitude?: number;
+  longitude?: number;
+  imageUrl?: string;
+  whatsappNumber?: string;
+  is24x7: boolean;
+  discountPercentage: number;
+  status: string;
+  rejectionReason?: string;
+  ownerId: number;
+  createdAt: Date;
+  updatedAt: Date;
+};

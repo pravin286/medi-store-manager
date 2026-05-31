@@ -73,7 +73,11 @@ export default function AdminDashboard() {
     search: search || undefined,
     status: statusTab === "all" ? undefined : statusTab,
   });
-
+const storeList = (() => {
+  if (Array.isArray(stores)) return stores;
+  if (stores && Array.isArray((stores as any).data)) return (stores as any).data;
+  return [];
+})();
   const approveMutation = useApproveStore();
   const rejectMutation = useRejectStore();
   const deleteMutation = useDeleteStore();
@@ -252,17 +256,17 @@ export default function AdminDashboard() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : stores?.length === 0 ? (
+            ) : storeList?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                     No stores found matching your criteria.
                   </TableCell>
                 </TableRow>
               ) : (
-                stores?.map((store) => (
+                storeList.map((store) => (
                   <TableRow key={store.id} className="cursor-pointer" onClick={() => setLocation(`/admin/stores/${store.id}`)}>
-                    <TableCell className="font-medium">{store.storeName}</TableCell>
-                    <TableCell>{store.ownerName}</TableCell>
+                    <TableCell>{(store as any).store_name ?? store.storeName ?? "-"}</TableCell>
+<TableCell>{(store as any).owner_name ?? store.ownerName ?? "-"}</TableCell>
                     <TableCell>
                       {store.discountPercentage > 0 ? (
                         <span className="text-green-600 font-semibold">{store.discountPercentage}%</span>
@@ -271,7 +275,9 @@ export default function AdminDashboard() {
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {format(new Date(store.createdAt), "MMM d, yyyy")}
+                      {store?.createdAt && !isNaN(new Date(store.createdAt).getTime())
+  ? format(new Date(store.createdAt), "MMM d, yyyy")
+  : "-"}
                     </TableCell>
                     <TableCell>{getStatusBadge(store.status)}</TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>

@@ -12,10 +12,33 @@ export default function StoreDetail() {
   const storeId = parseInt(id || "0", 10);
 
   const { data: store, isLoading, error } = useGetStore(storeId, {
-    query: {
-      enabled: !!storeId && !isNaN(storeId),
-    },
+   query: {
+  enabled: !!storeId && !isNaN(storeId),
+} as any,
   });
+  const normalizedStore = store
+  ? {
+      ...store,
+      imageUrl:
+        (store as any).imageUrl ?? (store as any).image_url,
+      storeName:
+        (store as any).storeName ?? (store as any).store_name,
+      ownerName:
+        (store as any).ownerName ?? (store as any).owner_name,
+      createdAt:
+        (store as any).createdAt ?? (store as any).created_at,
+      discountPercentage:
+        (store as any).discountPercentage ??
+        (store as any).discount_percentage,
+      whatsappNumber:
+        (store as any).whatsappNumber ??
+        (store as any).whatsapp_number,
+      is24x7:
+        typeof (store as any).is24x7 === "boolean"
+          ? (store as any).is24x7
+          : Boolean((store as any).is_24x7),
+    }
+  : null;
 
   if (isLoading) {
     return (
@@ -27,7 +50,7 @@ export default function StoreDetail() {
     );
   }
 
-  if (error || !store) {
+  if (error || !normalizedStore) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <StoreIcon className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
@@ -36,20 +59,20 @@ export default function StoreDetail() {
       </div>
     );
   }
-
-  const mapCenter: [number, number] = store.latitude && store.longitude 
-    ? [store.latitude, store.longitude] 
+const s = normalizedStore!;
+  const mapCenter: [number, number] = s.latitude && s.longitude 
+    ? [s.latitude, s.longitude] 
     : [40.7128, -74.0060];
 
-  const whatsappHref = store.whatsappNumber
-    ? `https://wa.me/${store.whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-        `Hi, I'm interested in your store "${store.storeName}" listed on MediDirectory.`
+  const whatsappHref = s.whatsappNumber
+    ? `https://wa.me/${s.whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+        `Hi, I'm interested in your store "${s.storeName}" listed on MediDirectory.`
       )}`
     : null;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {store.is24x7 && (
+      {s.is24x7 && (
         <div className="mb-6 flex items-center gap-3 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 to-rose-100/40 p-4 shadow-sm">
           <span className="relative grid place-items-center w-10 h-10 rounded-full bg-rose-500 text-white shrink-0">
             <Siren className="h-5 w-5" />
@@ -64,16 +87,16 @@ export default function StoreDetail() {
       <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            {store.storeName}
+            {s.storeName}
           </h1>
           <div className="flex items-center text-muted-foreground mt-2 gap-1.5">
             <MapPin className="h-4 w-4" />
-            <span>{store.address}</span>
+            <span>{s.address}</span>
           </div>
         </div>
-        {store.discountPercentage > 0 && (
+        {s.discountPercentage > 0 && (
           <Badge className="bg-green-500 hover:bg-green-600 text-white font-bold text-lg px-4 py-1.5 shadow-md shrink-0">
-            {store.discountPercentage}% OFF ALL ITEMS
+            {s.discountPercentage}% OFF ALL ITEMS
           </Badge>
         )}
       </div>
@@ -82,10 +105,10 @@ export default function StoreDetail() {
         <div className="md:col-span-2 space-y-6">
           <Card className="overflow-hidden border-0 shadow-md">
             <div className="h-64 sm:h-80 bg-muted relative">
-              {store.imageUrl ? (
+              {s.imageUrl ? (
                 <img 
-                  src={store.imageUrl} 
-                  alt={store.storeName} 
+                  src={s.imageUrl} 
+                  alt={s.storeName} 
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -99,7 +122,7 @@ export default function StoreDetail() {
           <Card>
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Location</h2>
-              {store.latitude && store.longitude ? (
+              {s.latitude && s.longitude ? (
                 <div className="rounded-md overflow-hidden border">
                   <Map 
                     center={mapCenter} 
@@ -127,7 +150,7 @@ export default function StoreDetail() {
                   <User className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Owner</p>
-                    <p className="text-sm text-muted-foreground">{store.ownerName}</p>
+                    <p className="text-sm text-muted-foreground">{s.ownerName}</p>
                   </div>
                 </div>
                 
@@ -136,7 +159,9 @@ export default function StoreDetail() {
                   <div>
                     <p className="text-sm font-medium">Listed Since</p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(store.createdAt), "MMMM d, yyyy")}
+                      {s.createdAt
+  ? format(new Date(s.createdAt), "MMMM d, yyyy")
+  : "-"}
                     </p>
                   </div>
                 </div>

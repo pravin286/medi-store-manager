@@ -47,10 +47,18 @@ export default function AdminStoreDetail() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
 
-  const { data: store, isLoading, error } = useGetStore(storeId, {
-    query: { enabled: !!storeId && !isNaN(storeId) },
-  });
-
+ const { data: store, isLoading, error } = useGetStore(storeId, {
+  query: {
+    enabled: !!storeId && !isNaN(storeId),
+  } as any,
+});
+const normalizedStore = store
+  ? {
+      ...store,
+      createdAt:
+        (store as any).createdAt ?? (store as any).created_at,
+    }
+  : null;
   const approveMutation = useApproveStore();
   const rejectMutation = useRejectStore();
   const deleteMutation = useDeleteStore();
@@ -65,7 +73,8 @@ export default function AdminStoreDetail() {
     );
   }
 
-  if (error || !store) {
+  if (error || !normalizedStore) {
+   
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <StoreIcon className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
@@ -74,10 +83,10 @@ export default function AdminStoreDetail() {
       </div>
     );
   }
-
+const s = normalizedStore!;
   const handleApprove = () => {
     approveMutation.mutate(
-      { id: storeId, data: {} },
+      { id: storeId},
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetStoreQueryKey(storeId) });
@@ -129,8 +138,9 @@ export default function AdminStoreDetail() {
     }
   };
 
-  const mapCenter: [number, number] = store.latitude && store.longitude 
-    ? [store.latitude, store.longitude] 
+  const mapCenter: [number, number] =
+  s.latitude != null && s.longitude != null
+    ? [s.latitude, s.longitude]
     : [40.7128, -74.0060];
 
   return (
@@ -143,20 +153,20 @@ export default function AdminStoreDetail() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              {store.storeName}
+              {s.storeName}
             </h1>
-            {getStatusBadge(store.status)}
+            {getStatusBadge(s.status)}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => setLocation(`/admin/stores/${storeId}/edit`)} variant="outline">
               <Pencil className="mr-2 h-4 w-4" /> Edit
             </Button>
-            {store.status !== "approved" && (
+            {s.status !== "approved" && (
               <Button onClick={handleApprove} className="bg-green-600 hover:bg-green-700" disabled={approveMutation.isPending}>
                 <CheckCircle className="mr-2 h-4 w-4" /> Approve
               </Button>
             )}
-            {store.status !== "rejected" && (
+            {s.status !== "rejected" && (
               <Button onClick={() => setRejectModalOpen(true)} variant="outline" className="text-yellow-600 border-yellow-600 hover:bg-yellow-50" disabled={rejectMutation.isPending}>
                 <XCircle className="mr-2 h-4 w-4" /> Reject
               </Button>
@@ -168,12 +178,12 @@ export default function AdminStoreDetail() {
         </div>
       </div>
 
-      {store.status === "rejected" && store.rejectionReason && (
+      {s.status === "rejected" && s.rejectionReason && (
         <div className="mb-6 p-4 bg-red-50 text-red-900 rounded-lg border border-red-200 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-red-600" />
           <div>
             <h4 className="font-semibold text-red-800">Rejection Reason</h4>
-            <p className="mt-1">{store.rejectionReason}</p>
+            <p className="mt-1">{s.rejectionReason}</p>
           </div>
         </div>
       )}
@@ -182,8 +192,8 @@ export default function AdminStoreDetail() {
         <div className="md:col-span-2 space-y-6">
           <Card className="overflow-hidden border-0 shadow-md">
             <div className="h-64 sm:h-80 bg-muted relative">
-              {store.imageUrl ? (
-                <img src={store.imageUrl} alt={store.storeName} className="w-full h-full object-cover" />
+              {s.imageUrl ? (
+                <img src={s.imageUrl} alt={s.storeName} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-secondary text-secondary-foreground">
                   <StoreIcon className="h-20 w-20 opacity-20" />
@@ -195,7 +205,7 @@ export default function AdminStoreDetail() {
           <Card>
             <CardContent className="p-6">
               <h2 className="text-xl font-semibold mb-4">Location</h2>
-              {store.latitude && store.longitude ? (
+              {s.latitude && s.longitude ? (
                 <div className="rounded-md overflow-hidden border">
                   <Map center={mapCenter} marker={mapCenter} className="h-[300px] w-full" />
                 </div>
@@ -214,7 +224,7 @@ export default function AdminStoreDetail() {
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Discount Offered</h3>
                 <div className="text-2xl font-bold text-green-600">
-                  {store.discountPercentage}% OFF
+                  {s.discountPercentage}% OFF
                 </div>
               </div>
 
@@ -223,7 +233,7 @@ export default function AdminStoreDetail() {
                   <MapPin className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Address</p>
-                    <p className="text-sm text-muted-foreground">{store.address}</p>
+                    <p className="text-sm text-muted-foreground">{s.address}</p>
                   </div>
                 </div>
                 
@@ -231,7 +241,7 @@ export default function AdminStoreDetail() {
                   <User className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Owner</p>
-                    <p className="text-sm text-muted-foreground">{store.ownerName}</p>
+                    <p className="text-sm text-muted-foreground">{s.ownerName}</p>
                   </div>
                 </div>
                 
@@ -239,9 +249,11 @@ export default function AdminStoreDetail() {
                   <Calendar className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Submission Date</p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(store.createdAt), "MMMM d, yyyy")}
-                    </p>
+                   <p className="text-sm text-muted-foreground">
+ {normalizedStore?.createdAt
+  ? format(new Date(normalizedStore.createdAt), "MMMM d, yyyy")
+  : "-"}
+</p>
                   </div>
                 </div>
               </div>

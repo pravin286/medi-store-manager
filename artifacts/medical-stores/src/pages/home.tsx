@@ -34,15 +34,42 @@ export default function Home() {
   const [emergencyOnly, setEmergencyOnly] = useState(false);
 
   const { data: cities } = useListCities();
+  const citySearch = search.trim();
 
-  const { data: stores, isLoading } = useListStores({
-    search: search || undefined,
-    city: city !== ALL_CITIES ? city : undefined,
-    minDiscount: minDiscount[0] > 0 ? minDiscount[0] : undefined,
-    is24x7: emergencyOnly ? true : undefined,
-  });
+  const { data: stores, isLoading } = useListStores();
 
   const hasActiveFilters = search || city !== ALL_CITIES || minDiscount[0] > 0 || emergencyOnly;
+
+
+  const normalizedStores = (
+  Array.isArray(stores)
+    ? stores
+    : ((stores as any)?.data ?? [])
+).map((store: any) => ({
+  ...store,
+  imageUrl: store.imageUrl ?? store.image_url,
+  storeName: store.storeName ?? store.store_name,
+  ownerName: store.ownerName ?? store.owner_name,
+  discountPercentage:
+    store.discountPercentage ?? store.discount_percentage,
+  is24x7:
+    typeof store.is24x7 === "boolean"
+      ? store.is24x7
+      : Boolean(store.is_24x7),
+}));
+
+  const filteredStores = normalizedStores.filter((store: any) => {
+    const storeCity = String(store.city ?? "").toLowerCase();
+    const typedCity = citySearch.toLowerCase();
+    const selectedCity = city !== ALL_CITIES ? city.toLowerCase() : "";
+
+    if (typedCity && !storeCity.includes(typedCity)) return false;
+    if (selectedCity && !storeCity.includes(selectedCity)) return false;
+    if (minDiscount[0] > 0 && Number(store.discountPercentage ?? 0) < minDiscount[0]) return false;
+    if (emergencyOnly && !store.is24x7) return false;
+
+    return true;
+  });
 
   const clearFilters = () => {
     setSearch("");
@@ -84,16 +111,25 @@ export default function Home() {
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search by store name..."
+                    placeholder="Search by city name..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setCity(ALL_CITIES);
+                    }}
                     className="pl-10 h-12 text-base bg-transparent border-0 shadow-none focus-visible:ring-1 focus-visible:ring-sky-300"
                   />
                 </div>
               </div>
 
               <div className="md:col-span-3 md:border-l md:border-border/50">
-                <Select value={city} onValueChange={setCity}>
+                <Select
+                  value={city}
+                  onValueChange={(value) => {
+                    setCity(value);
+                    setSearch("");
+                  }}
+                >
                   <SelectTrigger className="h-12 text-base border-0 bg-transparent shadow-none focus:ring-1 focus:ring-sky-300">
                     <div className="flex items-center gap-2 truncate">
                       <MapPin className="h-4 w-4 text-sky-500 shrink-0" />
@@ -102,7 +138,7 @@ export default function Home() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={ALL_CITIES}>All cities</SelectItem>
-                    {(cities || []).map((c) => (
+                    {(Array.isArray(cities) ? cities : ((cities as any)?.data ?? [])).map((c: string) => (
                       <SelectItem key={c} value={c}>
                         {c}
                       </SelectItem>
@@ -111,17 +147,22 @@ export default function Home() {
                 </Select>
               </div>
 
-              <div className="md:col-span-4 md:border-l md:border-border/50 px-4 py-2 flex flex-col justify-center">
+              <div className="md:col-span-4 md:border-l md:border-border/50 px-4 py-2 flex flex-col justify-center relative z-50">
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Min Discount</label>
                   <span className="text-sm font-bold text-sky-600">{minDiscount[0]}%</span>
                 </div>
-                <Slider
-                  value={minDiscount}
-                  onValueChange={setMinDiscount}
-                  max={100}
-                  step={1}
-                />
+<Slider
+  min={0}
+  max={100}
+  step={1}
+  value={minDiscount}
+  onValueChange={(value) => {
+    console.log("Slider value:", value);
+    setMinDiscount(value);
+  }}
+  className="cursor-pointer z-50"
+/>
               </div>
             </div>
           </CardContent>
@@ -157,7 +198,7 @@ export default function Home() {
             )}
             {search && (
               <Badge variant="secondary" className="gap-1 rounded-full bg-violet-50 text-violet-700 border-violet-100">
-                <Search className="h-3 w-3" /> {search}
+                <MapPin className="h-3 w-3" /> {search}
               </Badge>
             )}
             {minDiscount[0] > 0 && (
@@ -178,10 +219,10 @@ export default function Home() {
       </div>
 
       {/* Results header */}
-      {!isLoading && stores && stores.length > 0 && (
+      {!isLoading && filteredStores.length > 0 && (
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-foreground">
-            {stores.length} {stores.length === 1 ? "store" : "stores"} found
+            {filteredStores.length} {filteredStores.length === 1 ? "store" : "stores"} found
           </h2>
         </div>
       )}
@@ -199,7 +240,7 @@ export default function Home() {
             </Card>
           ))}
         </div>
-      ) : stores?.length === 0 ? (
+      ) : filteredStores.length === 0 ? (
         <div className="text-center py-20 bg-white/60 backdrop-blur rounded-2xl border border-dashed border-border/60 max-w-2xl mx-auto">
           <div className="inline-grid place-items-center w-16 h-16 rounded-2xl bg-sky-50 text-sky-500 mb-4">
             <StoreIcon className="h-8 w-8" />
@@ -214,7 +255,7 @@ export default function Home() {
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {stores?.map((store) => (
+          {filteredStores.map((store: any) => (
             <Link key={store.id} href={`/stores/${store.id}`}>
               <Card className={`overflow-hidden card-hover cursor-pointer h-full flex flex-col group bg-white ${
                 store.is24x7 ? "border-rose-300 ring-2 ring-rose-200/60 shadow-md shadow-rose-100" : "border-border/60"
@@ -263,7 +304,7 @@ export default function Home() {
                   </h3>
                   <div className="flex items-start gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground/70" />
-                    <p className="text-sm line-clamp-2">{store.address}</p>
+                    <p className="text-sm line-clamp-2">{store.city || "City not added"}</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">View details</span>

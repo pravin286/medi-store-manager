@@ -9,12 +9,16 @@ export const logger = pino({
     "req.headers.cookie",
     "res.headers['set-cookie']",
   ],
-  ...(isProduction
-    ? {}
-    : {
+
+  // Only enable pretty logs if explicitly enabled
+  ...(process.env.USE_PRETTY_LOGS === "true" && !isProduction
+    ? {
         transport: {
           target: "pino-pretty",
-          options: { colorize: true },
+          options: {
+            colorize: true,
+          },
         },
-      }),
+      }
+    : {}),
 });
