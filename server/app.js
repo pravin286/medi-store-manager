@@ -1,25 +1,30 @@
-import express from "express";
-import cors from "cors";
-import pinoHttp from "pino-http";
-import router from "./routes";
-import healthRoutes from "./routes/health"; // 👈 add this
-import { logger } from "./lib/logger";
-import path from "path";
-import fs from "fs";
-const app = express();
-const uploadsDir = path.resolve(process.env.UPLOADS_DIR ?? path.join(process.cwd(), "uploads"));
-const deployFrontendDir = path.resolve(process.cwd(), "deploy", "public");
-const appRootFrontendDir = path.resolve(process.cwd(), "public");
-const workspaceFrontendDir = path.resolve(process.cwd(), "artifacts", "medical-stores", "dist");
-const frontendDistDir = path.resolve(process.env.FRONTEND_DIST_DIR ??
-    (fs.existsSync(path.join(deployFrontendDir, "index.html"))
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const pino_http_1 = __importDefault(require("pino-http"));
+const routes_1 = __importDefault(require("./routes"));
+const health_1 = __importDefault(require("./routes/health")); // 👈 add this
+const logger_1 = require("./lib/logger");
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
+const app = (0, express_1.default)();
+const uploadsDir = path_1.default.resolve(process.env.UPLOADS_DIR ?? path_1.default.join(process.cwd(), "uploads"));
+const deployFrontendDir = path_1.default.resolve(process.cwd(), "deploy", "public");
+const appRootFrontendDir = path_1.default.resolve(process.cwd(), "public");
+const workspaceFrontendDir = path_1.default.resolve(process.cwd(), "artifacts", "medical-stores", "dist");
+const frontendDistDir = path_1.default.resolve(process.env.FRONTEND_DIST_DIR ??
+    (fs_1.default.existsSync(path_1.default.join(deployFrontendDir, "index.html"))
         ? deployFrontendDir
-        : fs.existsSync(path.join(appRootFrontendDir, "index.html"))
+        : fs_1.default.existsSync(path_1.default.join(appRootFrontendDir, "index.html"))
             ? appRootFrontendDir
-        : workspaceFrontendDir));
-const frontendIndex = path.join(frontendDistDir, "index.html");
-app.use(pinoHttp({
-    logger,
+            : workspaceFrontendDir));
+const frontendIndex = path_1.default.join(frontendDistDir, "index.html");
+app.use((0, pino_http_1.default)({
+    logger: logger_1.logger,
     serializers: {
         req(req) {
             return {
@@ -35,19 +40,19 @@ app.use(pinoHttp({
         },
     },
 }));
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true }));
 // ✅ Serve uploaded images
-app.use("/uploads", express.static(uploadsDir));
+app.use("/uploads", express_1.default.static(uploadsDir));
 // ✅ Health route WITHOUT /api prefix
-app.use("/", healthRoutes);
+app.use("/", health_1.default);
 // ✅ All other routes under /api
-app.use("/api", router);
-if (fs.existsSync(frontendIndex)) {
-    app.use(express.static(frontendDistDir));
+app.use("/api", routes_1.default);
+if (fs_1.default.existsSync(frontendIndex)) {
+    app.use(express_1.default.static(frontendDistDir));
     app.get(/^\/(?!api\/|uploads\/).*/, (_req, res) => {
         res.sendFile(frontendIndex);
     });
 }
-export default app;
+exports.default = app;

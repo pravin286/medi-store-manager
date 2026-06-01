@@ -1,17 +1,19 @@
-import { Router } from "express";
-import { db } from "../db";
-import { z } from "zod";
-import { signToken, hashPassword, comparePassword, requireAuth, } from "../lib/auth";
-const router = Router();
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const db_1 = require("../db");
+const zod_1 = require("zod");
+const auth_1 = require("../lib/auth");
+const router = (0, express_1.Router)();
 // ================= ZOD SCHEMAS =================
-const SignupBody = z.object({
-    email: z.string().email(),
-    password: z.string(),
-    name: z.string(),
+const SignupBody = zod_1.z.object({
+    email: zod_1.z.string().email(),
+    password: zod_1.z.string(),
+    name: zod_1.z.string(),
 });
-const LoginBody = z.object({
-    email: z.string().email(),
-    password: z.string(),
+const LoginBody = zod_1.z.object({
+    email: zod_1.z.string().email(),
+    password: zod_1.z.string(),
 });
 // ================= SIGNUP =================
 router.post("/auth/signup", async (req, res) => {
@@ -21,16 +23,16 @@ router.post("/auth/signup", async (req, res) => {
         return;
     }
     const { email, password, name } = parsed.data;
-    const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    const [existing] = await db_1.db.execute("SELECT * FROM users WHERE email = ?", [email]);
     if (existing.length > 0) {
         res.status(409).json({ error: "Email already exists" });
         return;
     }
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await (0, auth_1.hashPassword)(password);
     // ✅ FIXED HERE
-    const [result] = await db.execute("INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, 'owner')", [email, passwordHash, name]);
+    const [result] = await db_1.db.execute("INSERT INTO users (email, password_hash, name, role) VALUES (?, ?, ?, 'owner')", [email, passwordHash, name]);
     const userId = result.insertId;
-    const token = signToken({
+    const token = (0, auth_1.signToken)({
         id: userId,
         email,
         name,
@@ -54,19 +56,19 @@ router.post("/auth/login", async (req, res) => {
         return;
     }
     const { email, password } = parsed.data;
-    const [rows] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    const [rows] = await db_1.db.execute("SELECT * FROM users WHERE email = ?", [email]);
     const user = rows[0];
     if (!user || user.role !== "owner") {
         res.status(401).json({ error: "Invalid credentials" });
         return;
     }
     // ✅ FIXED HERE
-    const valid = await comparePassword(password, user.password_hash);
+    const valid = await (0, auth_1.comparePassword)(password, user.password_hash);
     if (!valid) {
         res.status(401).json({ error: "Invalid credentials" });
         return;
     }
-    const token = signToken({
+    const token = (0, auth_1.signToken)({
         id: user.id,
         email: user.email,
         name: user.name,
@@ -91,19 +93,19 @@ router.post("/auth/admin/login", async (req, res) => {
         return;
     }
     const { email, password } = parsed.data;
-    const [rows] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    const [rows] = await db_1.db.execute("SELECT * FROM users WHERE email = ?", [email]);
     const user = rows[0];
     if (!user || user.role !== "admin") {
         res.status(401).json({ error: "Invalid credentials" });
         return;
     }
     // ✅ FIXED HERE
-    const valid = await comparePassword(password, user.password_hash);
+    const valid = await (0, auth_1.comparePassword)(password, user.password_hash);
     if (!valid) {
         res.status(401).json({ error: "Invalid credentials" });
         return;
     }
-    const token = signToken({
+    const token = (0, auth_1.signToken)({
         id: user.id,
         email: user.email,
         name: user.name,
@@ -121,9 +123,9 @@ router.post("/auth/admin/login", async (req, res) => {
     });
 });
 // ================= CURRENT USER =================
-router.get("/auth/me", requireAuth, async (req, res) => {
+router.get("/auth/me", auth_1.requireAuth, async (req, res) => {
     const user = req.user;
-    const [rows] = await db.execute("SELECT * FROM users WHERE id = ?", [user.id]);
+    const [rows] = await db_1.db.execute("SELECT * FROM users WHERE id = ?", [user.id]);
     const dbUser = rows[0];
     if (!dbUser) {
         res.status(401).json({ error: "User not found" });
@@ -137,4 +139,4 @@ router.get("/auth/me", requireAuth, async (req, res) => {
         createdAt: dbUser.created_at,
     });
 });
-export default router;
+exports.default = router;
