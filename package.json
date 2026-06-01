@@ -21,10 +21,5 @@
     "pino": "^9",
     "pino-http": "^10",
     "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "lightningcss": "^1.32.0",
-    "prettier": "^3.8.1",
-    "typescript": "~5.9.2"
   }
 }
