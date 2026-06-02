@@ -8,9 +8,7 @@
     },
     {
       "path": "./lib/api-client-react"
-    },
-    {
-      "path": "./lib/api-zod"
     }
+   
   ]
 }

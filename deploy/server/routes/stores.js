@@ -33,7 +33,7 @@ const ListStoresQueryParams = zod_1.z.object({
 });
 // ================= FILE UPLOAD =================
 const uploadsDir = path_1.default.resolve(process.env.UPLOADS_DIR ?? path_1.default.join(process.cwd(), "uploads"));
-const publicApiUrl = (process.env.PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+const publicApiUrl = (process.env.PUBLIC_API_URL ?? "").replace(/\/$/, "");
 if (!fs_1.default.existsSync(uploadsDir)) {
     fs_1.default.mkdirSync(uploadsDir, { recursive: true });
 }
