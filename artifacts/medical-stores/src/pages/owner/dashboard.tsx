@@ -92,7 +92,7 @@ export default function OwnerDashboard() {
 
                 <div className="mt-auto pt-4 border-t flex items-center justify-between">
                   <div className="text-xs text-muted-foreground">
-                    Listed: {format(new Date(store.createdAt), "MMM d, yyyy")}
+                    Listed: {store?.createdAt && !isNaN(new Date(store.createdAt).getTime()) ? format(new Date(store.createdAt), "MMM d, yyyy") : "-"}
                   </div>
                   <Button variant="outline" size="sm" asChild className="gap-2">
                     <Link href={`/owner/stores/${store.id}/edit`}>
