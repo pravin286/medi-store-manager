@@ -159,7 +159,7 @@ const s = normalizedStore!;
                   <div>
                     <p className="text-sm font-medium">Listed Since</p>
                     <p className="text-sm text-muted-foreground">
-                      {s.createdAt
+                      {s.createdAt && !isNaN(new Date(s.createdAt).getTime())
   ? format(new Date(s.createdAt), "MMMM d, yyyy")
   : "-"}
                     </p>

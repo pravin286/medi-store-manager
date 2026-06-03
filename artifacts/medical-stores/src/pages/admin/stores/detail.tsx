@@ -250,7 +250,7 @@ const s = normalizedStore!;
                   <div>
                     <p className="text-sm font-medium">Submission Date</p>
                    <p className="text-sm text-muted-foreground">
- {normalizedStore?.createdAt
+ {normalizedStore?.createdAt && !isNaN(new Date(normalizedStore.createdAt).getTime())
   ? format(new Date(normalizedStore.createdAt), "MMMM d, yyyy")
   : "-"}
 </p>
