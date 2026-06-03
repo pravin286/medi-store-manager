@@ -21,7 +21,7 @@ import { Upload, MapPin, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 
-const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:4000").replace(/\/$/, "");
+const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") ?? "";
 
 const formSchema = z.object({
   storeName: z.string().min(2, "Store name is required"),
@@ -89,20 +89,21 @@ export function StoreForm({ initialData, onSubmit, isSubmitting }: StoreFormProp
     formData.append("image", file);
 
     try {
-      const response = await fetch(`${apiUrl}/api/upload/image`, {
+      const uploadUrl = apiUrl ? `${apiUrl}/api/upload/image` : "/api/upload/image";
+      const response = await fetch(uploadUrl, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
       if (!response.ok) throw new Error("Upload failed");
       const res = await response.json() as { url: string };
-     form.setValue("imageUrl", res.url, {
-  shouldValidate: true,
-  shouldDirty: true,
-  shouldTouch: true,
-});
+      form.setValue("imageUrl", res.url, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
 
-console.log("✅ IMAGE URL SAVED:", res.url);
+      console.log("✅ IMAGE URL SAVED:", res.url);
       toast({
         title: "Image uploaded successfully",
       });
