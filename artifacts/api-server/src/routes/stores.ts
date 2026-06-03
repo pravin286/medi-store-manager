@@ -32,7 +32,7 @@ const ListStoresQueryParams = z.object({
 
 // ================= FILE UPLOAD =================
 const uploadsDir = path.resolve(process.env.UPLOADS_DIR ?? path.join(process.cwd(), "uploads"));
-const publicApiUrl = (process.env.PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+const publicApiUrl = (process.env.PUBLIC_API_URL ?? "").replace(/\/\$/, "");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
