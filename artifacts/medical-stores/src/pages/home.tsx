@@ -90,15 +90,6 @@ export default function Home() {
           Find the right <span className="text-gradient-brand">medical store</span>
           <br className="hidden sm:block" /> near you.
         </h1>
-        <p className="text-base sm:text-lg text-muted-foreground max-w-2xl">
-          Browse verified pharmacies, compare discounts, and locate your nearest store on the map — all in one place.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2 text-sm text-muted-foreground">
-          <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-500" /> Verified by admin</span>
-          <span className="flex items-center gap-2"><Tag className="h-4 w-4 text-sky-500" /> Real-time discounts</span>
-          <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-rose-500" /> Pin-point locations</span>
-        </div>
       </div>
 
       {/* Filters Card */}
@@ -111,7 +102,7 @@ export default function Home() {
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Search by city name..."
+                    placeholder="Search by city (Pune, Mumbai, Bangalore...)"
                     value={search}
                     onChange={(e) => {
                       setSearch(e.target.value);
