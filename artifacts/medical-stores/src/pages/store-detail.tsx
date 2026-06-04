@@ -96,7 +96,7 @@ const s = normalizedStore!;
         </div>
         {s.discountPercentage > 0 && (
           <Badge className="bg-green-500 hover:bg-green-600 text-white font-bold text-lg px-4 py-1.5 shadow-md shrink-0">
-            {s.discountPercentage}% OFF ALL ITEMS
+            {Math.round(s.discountPercentage)}% OFF ALL ITEMS
           </Badge>
         )}
       </div>

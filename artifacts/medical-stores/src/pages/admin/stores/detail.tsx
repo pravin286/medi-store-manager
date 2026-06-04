@@ -224,7 +224,7 @@ const s = normalizedStore!;
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-1">Discount Offered</h3>
                 <div className="text-2xl font-bold text-green-600">
-                  {s.discountPercentage}% OFF
+                  {Math.round(s.discountPercentage)}% OFF
                 </div>
               </div>
 

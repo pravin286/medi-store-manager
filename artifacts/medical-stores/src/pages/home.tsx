@@ -277,7 +277,7 @@ export default function Home() {
 
                   {store.discountPercentage > 0 && (
                     <Badge className="absolute top-3 right-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-3 py-1.5 text-sm shadow-lg shadow-emerald-500/30 border-0">
-                      {store.discountPercentage}% OFF
+                      {Math.round(store.discountPercentage)}% OFF
                     </Badge>
                   )}
                   {store.city && (
