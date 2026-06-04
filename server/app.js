@@ -45,6 +45,12 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // ✅ Serve uploaded images
 app.use("/uploads", express_1.default.static(uploadsDir));
+// 🔧 Debug upload storage path
+app.get("/debug-uploads", (_req, res) => {
+    const exists = fs_1.default.existsSync(uploadsDir);
+    const files = exists ? fs_1.default.readdirSync(uploadsDir) : [];
+    res.json({ uploadsDir, exists, files });
+});
 // ✅ Health route WITHOUT /api prefix
 app.use("/", health_1.default);
 // ✅ All other routes under /api
