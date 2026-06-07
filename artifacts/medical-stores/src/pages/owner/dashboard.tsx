@@ -11,6 +11,27 @@ export default function OwnerDashboard() {
   const { user } = useAuth();
   const { data: stores, isLoading } = useListMyStores();
 
+  const normalizedStores = (
+    Array.isArray(stores)
+      ? stores
+      : ((stores as any)?.data ?? [])
+  ).map((store: any) => ({
+    ...store,
+    storeName: store.storeName ?? store.store_name,
+    ownerName: store.ownerName ?? store.owner_name,
+    imageUrl: store.imageUrl ?? store.image_url,
+    discountPercentage:
+      store.discountPercentage ?? store.discount_percentage,
+    whatsappNumber: store.whatsappNumber ?? store.whatsapp_number,
+    rejectionReason: store.rejectionReason ?? store.rejection_reason,
+    createdAt: store.createdAt ?? store.created_at,
+    ownerId: store.ownerId ?? store.owner_id,
+    is24x7:
+      typeof store.is24x7 === "boolean"
+        ? store.is24x7
+        : Boolean(store.is_24x7),
+  }));
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
@@ -50,7 +71,7 @@ export default function OwnerDashboard() {
             </Card>
           ))}
         </div>
-      ) : stores?.length === 0 ? (
+      ) : normalizedStores.length === 0 ? (
         <div className="text-center py-20 bg-card rounded-lg border border-dashed shadow-sm">
           <StoreIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground">No stores listed yet</h3>
@@ -61,7 +82,7 @@ export default function OwnerDashboard() {
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {stores?.map((store) => (
+          {normalizedStores.map((store: any) => (
             <Card key={store.id} className="overflow-hidden flex flex-col h-full">
               <div className="relative h-40 bg-muted">
                 {store.imageUrl ? (

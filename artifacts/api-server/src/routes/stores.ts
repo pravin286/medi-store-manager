@@ -56,6 +56,24 @@ const upload = multer({
 
 const router: IRouter = Router();
 
+const toStoreResponse = (store: any) => ({
+  ...store,
+  storeName: store.storeName ?? store.store_name,
+  ownerName: store.ownerName ?? store.owner_name,
+  imageUrl: store.imageUrl ?? store.image_url,
+  whatsappNumber: store.whatsappNumber ?? store.whatsapp_number,
+  is24x7:
+    typeof store.is24x7 === "boolean"
+      ? store.is24x7
+      : Boolean(store.is_24x7),
+  discountPercentage:
+    store.discountPercentage ?? store.discount_percentage,
+  ownerId: store.ownerId ?? store.owner_id,
+  createdAt: store.createdAt ?? store.created_at,
+  updatedAt: store.updatedAt ?? store.updated_at,
+  rejectionReason: store.rejectionReason ?? store.rejection_reason,
+});
+
 // ================= IMAGE =================
 router.post("/upload/image", requireAuth, upload.single("image"), async (req, res) => {
   if (!req.file) {
@@ -105,7 +123,7 @@ router.get("/stores", async (req, res) => {
   }
 
   const [rows]: any = await db.execute(query, values);
-  res.json(rows);
+  res.json(rows.map(toStoreResponse));
 });
 
 // ================= CREATE =================
@@ -150,7 +168,7 @@ router.get("/stores/my", requireAuth, async (req: AuthRequest, res) => {
     "SELECT * FROM stores WHERE owner_id=? ORDER BY created_at DESC",
     [req.user!.id]
   );
-  res.json(rows);
+  res.json(rows.map(toStoreResponse));
 });
 
 // ================= GET CITIES =================
@@ -186,7 +204,7 @@ router.get("/stores/:id", async (req, res): Promise<void> => {
       return;
     }
 
-    res.json(store);
+    res.json(toStoreResponse(store));
   } catch (error) {
     console.error("Error fetching store by id:", error);
     res.status(500).json({ error: "Internal Server Error" });

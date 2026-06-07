@@ -21,6 +21,34 @@ export default function EditStore() {
 
   const updateMutation = useUpdateStore();
 
+  const normalizedStore = store
+    ? {
+        ...store,
+        storeName: (store as any).storeName ?? (store as any).store_name,
+        ownerName: (store as any).ownerName ?? (store as any).owner_name,
+        address: (store as any).address ?? "",
+        city: (store as any).city ?? "",
+        imageUrl: (store as any).imageUrl ?? (store as any).image_url,
+        discountPercentage:
+          (store as any).discountPercentage ??
+          (store as any).discount_percentage ??
+          0,
+        whatsappNumber:
+          (store as any).whatsappNumber ??
+          (store as any).whatsapp_number ??
+          null,
+        createdAt: (store as any).createdAt ?? (store as any).created_at,
+        rejectionReason:
+          (store as any).rejectionReason ??
+          (store as any).rejection_reason,
+        ownerId: (store as any).ownerId ?? (store as any).owner_id,
+        is24x7:
+          typeof (store as any).is24x7 === "boolean"
+            ? (store as any).is24x7
+            : Boolean((store as any).is_24x7),
+      }
+    : null;
+
   const handleSubmit = (data: any) => {
     updateMutation.mutate(
       { id: storeId, data },
@@ -57,7 +85,7 @@ export default function EditStore() {
     );
   }
 
-  if (!store) {
+  if (!normalizedStore) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <h2 className="text-2xl font-bold">Store Not Found</h2>
@@ -78,7 +106,7 @@ export default function EditStore() {
       </div>
 
       <StoreForm 
-        initialData={store}
+        initialData={normalizedStore}
         onSubmit={handleSubmit} 
         isSubmitting={updateMutation.isPending} 
       />

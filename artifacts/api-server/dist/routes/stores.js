@@ -55,6 +55,21 @@ const upload = (0, multer_1.default)({
     },
 });
 const router = (0, express_1.Router)();
+const toStoreResponse = (store) => ({
+    ...store,
+    storeName: store.storeName ?? store.store_name,
+    ownerName: store.ownerName ?? store.owner_name,
+    imageUrl: store.imageUrl ?? store.image_url,
+    whatsappNumber: store.whatsappNumber ?? store.whatsapp_number,
+    is24x7: typeof store.is24x7 === "boolean"
+        ? store.is24x7
+        : Boolean(store.is_24x7),
+    discountPercentage: store.discountPercentage ?? store.discount_percentage,
+    ownerId: store.ownerId ?? store.owner_id,
+    createdAt: store.createdAt ?? store.created_at,
+    updatedAt: store.updatedAt ?? store.updated_at,
+    rejectionReason: store.rejectionReason ?? store.rejection_reason,
+});
 // ================= IMAGE =================
 router.post("/upload/image", auth_1.requireAuth, upload.single("image"), async (req, res) => {
     if (!req.file) {
@@ -99,7 +114,7 @@ router.get("/stores", async (req, res) => {
         query += " AND is_24x7 = 1";
     }
     const [rows] = await db_1.db.execute(query, values);
-    res.json(rows);
+    res.json(rows.map(toStoreResponse));
 });
 // ================= CREATE =================
 router.post("/stores", auth_1.requireAuth, async (req, res) => {
@@ -130,7 +145,7 @@ router.post("/stores", auth_1.requireAuth, async (req, res) => {
 // ================= MY STORES =================
 router.get("/stores/my", auth_1.requireAuth, async (req, res) => {
     const [rows] = await db_1.db.execute("SELECT * FROM stores WHERE owner_id=? ORDER BY created_at DESC", [req.user.id]);
-    res.json(rows);
+    res.json(rows.map(toStoreResponse));
 });
 // ================= GET CITIES =================
 router.get("/stores/cities", async (_req, res) => {
@@ -155,7 +170,7 @@ router.get("/stores/:id", async (req, res) => {
             res.status(404).json({ error: "Store not found" });
             return;
         }
-        res.json(store);
+        res.json(toStoreResponse(store));
     }
     catch (error) {
         console.error("Error fetching store by id:", error);
