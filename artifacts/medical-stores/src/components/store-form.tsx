@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Map } from "@/components/map";
+import { Map } from "@/components/map";//remove map in future and use a better one with search and autocomplete
 import {
   Form,
   FormControl,
